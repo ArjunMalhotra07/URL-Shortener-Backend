@@ -1,0 +1,14 @@
+version: "2"
+sql:
+  - engine: "mysql"
+    queries: [
+        "db/queries",
+      ]
+    schema: "db/migrations" # all migration files will be here
+    gen:
+      go:
+        package: "db"
+        out: "db/output"
+        emit_json_tags: true
+        emit_interface: false
+        emit_empty_slices: true
