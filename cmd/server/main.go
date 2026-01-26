@@ -42,6 +42,7 @@ func main() {
 	// Get services
 	svcs := internal.GetAppServices(internal.AppServicesParams{
 		Queries: queries,
+		Logger:  logr,
 	})
 
 	// Server

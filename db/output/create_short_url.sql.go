@@ -45,3 +45,38 @@ func (q *Queries) CreateShortURL(ctx context.Context, arg CreateShortURLParams) 
 	)
 	return i, err
 }
+
+const updateShortURLCode = `-- name: UpdateShortURLCode :one
+UPDATE short_urls
+SET code = $2
+WHERE id = $1
+RETURNING id, code, long_url, owner_id, created_at, updated_at
+`
+
+type UpdateShortURLCodeParams struct {
+	ID   int64  `json:"id"`
+	Code string `json:"code"`
+}
+
+type UpdateShortURLCodeRow struct {
+	ID        int64              `json:"id"`
+	Code      string             `json:"code"`
+	LongUrl   string             `json:"long_url"`
+	OwnerID   pgtype.Int8        `json:"owner_id"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) UpdateShortURLCode(ctx context.Context, arg UpdateShortURLCodeParams) (UpdateShortURLCodeRow, error) {
+	row := q.db.QueryRow(ctx, updateShortURLCode, arg.ID, arg.Code)
+	var i UpdateShortURLCodeRow
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.LongUrl,
+		&i.OwnerID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
