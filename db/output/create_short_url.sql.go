@@ -46,6 +46,28 @@ func (q *Queries) CreateShortURL(ctx context.Context, arg CreateShortURLParams) 
 	return i, err
 }
 
+const getShortURLByCode = `-- name: GetShortURLByCode :one
+SELECT id, code, long_url, owner_id, is_active, expires_at, created_at, updated_at
+FROM short_urls
+WHERE code = $1
+`
+
+func (q *Queries) GetShortURLByCode(ctx context.Context, code string) (ShortUrl, error) {
+	row := q.db.QueryRow(ctx, getShortURLByCode, code)
+	var i ShortUrl
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.LongUrl,
+		&i.OwnerID,
+		&i.IsActive,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const updateShortURLCode = `-- name: UpdateShortURLCode :one
 UPDATE short_urls
 SET code = $2

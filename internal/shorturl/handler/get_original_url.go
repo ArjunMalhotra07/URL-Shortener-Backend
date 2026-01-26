@@ -1,17 +1,37 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
+
+	"url_shortner_backend/internal/shorturl/service"
 
 	"github.com/labstack/echo/v4"
 )
 
-type GetOriginalURLRes struct {
-	Message string `json:"message"`
-}
-
 func (h *ShortURLHandler) GetOriginalURL(c echo.Context) error {
-	return c.JSON(http.StatusMovedPermanently, GetOriginalURLRes{
-		Message: "Short url created successfully",
+	code := c.Param("code")
+	if code == "" {
+		return c.JSON(http.StatusBadRequest, ErrorRes{Error: "code is required"})
+	}
+
+	output, err := h.Svc.GetLongURL(c.Request().Context(), service.GetLongURLInput{
+		Code: code,
 	})
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrInvalidCode):
+			return c.JSON(http.StatusBadRequest, ErrorRes{Error: err.Error()})
+		case errors.Is(err, service.ErrURLNotFound):
+			return c.JSON(http.StatusNotFound, ErrorRes{Error: err.Error()})
+		case errors.Is(err, service.ErrURLExpired):
+			return c.JSON(http.StatusGone, ErrorRes{Error: err.Error()})
+		case errors.Is(err, service.ErrURLInactive):
+			return c.JSON(http.StatusGone, ErrorRes{Error: err.Error()})
+		default:
+			return c.JSON(http.StatusInternalServerError, ErrorRes{Error: "internal server error"})
+		}
+	}
+
+	return c.Redirect(http.StatusMovedPermanently, output.LongURL)
 }

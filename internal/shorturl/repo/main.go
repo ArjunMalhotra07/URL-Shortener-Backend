@@ -9,6 +9,7 @@ import (
 type ShortURLRepository interface {
 	CreateShortURL(ctx context.Context, params db.CreateShortURLParams) (db.CreateShortURLRow, error)
 	UpdateShortURLCode(ctx context.Context, params db.UpdateShortURLCodeParams) (db.UpdateShortURLCodeRow, error)
+	GetShortURLByCode(ctx context.Context, code string) (db.ShortUrl, error)
 }
 
 type ShortURLRepoImp struct {
@@ -31,4 +32,8 @@ func (r *ShortURLRepoImp) CreateShortURL(ctx context.Context, params db.CreateSh
 
 func (r *ShortURLRepoImp) UpdateShortURLCode(ctx context.Context, params db.UpdateShortURLCodeParams) (db.UpdateShortURLCodeRow, error) {
 	return r.Queries.UpdateShortURLCode(ctx, params)
+}
+
+func (r *ShortURLRepoImp) GetShortURLByCode(ctx context.Context, code string) (db.ShortUrl, error) {
+	return r.Queries.GetShortURLByCode(ctx, code)
 }
