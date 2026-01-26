@@ -5,17 +5,16 @@
 package db
 
 import (
-	"database/sql"
-	"time"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type ShortUrl struct {
-	ID        int64         `json:"id"`
-	Code      string        `json:"code"`
-	LongUrl   string        `json:"long_url"`
-	OwnerID   sql.NullInt64 `json:"owner_id"`
-	IsActive  bool          `json:"is_active"`
-	ExpiresAt sql.NullTime  `json:"expires_at"`
-	CreatedAt time.Time     `json:"created_at"`
-	UpdatedAt time.Time     `json:"updated_at"`
+	ID        int64              `json:"id"`
+	Code      string             `json:"code"`
+	LongUrl   string             `json:"long_url"`
+	OwnerID   pgtype.Int8        `json:"owner_id"`
+	IsActive  bool               `json:"is_active"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }

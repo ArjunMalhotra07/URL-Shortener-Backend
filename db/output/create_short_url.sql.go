@@ -7,8 +7,8 @@ package db
 
 import (
 	"context"
-	"database/sql"
-	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createShortURL = `-- name: CreateShortURL :one
@@ -18,22 +18,22 @@ RETURNING id, code, long_url, owner_id, created_at, updated_at
 `
 
 type CreateShortURLParams struct {
-	Code    string        `json:"code"`
-	LongUrl string        `json:"long_url"`
-	OwnerID sql.NullInt64 `json:"owner_id"`
+	Code    string      `json:"code"`
+	LongUrl string      `json:"long_url"`
+	OwnerID pgtype.Int8 `json:"owner_id"`
 }
 
 type CreateShortURLRow struct {
-	ID        int64         `json:"id"`
-	Code      string        `json:"code"`
-	LongUrl   string        `json:"long_url"`
-	OwnerID   sql.NullInt64 `json:"owner_id"`
-	CreatedAt time.Time     `json:"created_at"`
-	UpdatedAt time.Time     `json:"updated_at"`
+	ID        int64              `json:"id"`
+	Code      string             `json:"code"`
+	LongUrl   string             `json:"long_url"`
+	OwnerID   pgtype.Int8        `json:"owner_id"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) CreateShortURL(ctx context.Context, arg CreateShortURLParams) (CreateShortURLRow, error) {
-	row := q.db.QueryRowContext(ctx, createShortURL, arg.Code, arg.LongUrl, arg.OwnerID)
+	row := q.db.QueryRow(ctx, createShortURL, arg.Code, arg.LongUrl, arg.OwnerID)
 	var i CreateShortURLRow
 	err := row.Scan(
 		&i.ID,

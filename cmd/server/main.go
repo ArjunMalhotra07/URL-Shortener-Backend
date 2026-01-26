@@ -8,6 +8,8 @@ import (
 	"syscall"
 	"time"
 
+	db "url_shortner_backend/db/output"
+	"url_shortner_backend/internal"
 	"url_shortner_backend/pkg/config"
 	"url_shortner_backend/pkg/httpserver"
 	"url_shortner_backend/pkg/logger"
@@ -35,10 +37,15 @@ func main() {
 		log.Fatalf("connect db: %v", err)
 	}
 	defer pool.Close()
+	queries := db.New(pool)
+
 	// Get services
+	svcs := internal.GetAppServices(internal.AppServicesParams{
+		Queries: queries,
+	})
 
 	// Server
-	svr := httpserver.EchoServer()
+	svr := httpserver.NewEchoServer(svcs)
 
 	go func() {
 		logr.Info("Starting server", "addr", cfg.ServerPort)
