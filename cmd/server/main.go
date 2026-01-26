@@ -13,6 +13,7 @@ import (
 	"url_shortner_backend/pkg/config"
 	"url_shortner_backend/pkg/httpserver"
 	"url_shortner_backend/pkg/logger"
+	"url_shortner_backend/pkg/migrate"
 	"url_shortner_backend/pkg/postgres"
 )
 
@@ -24,6 +25,9 @@ func main() {
 	}
 	// Load logger
 	logr := logger.NewZeroLogger()
+
+	// Run migrations
+	migrate.RunMigrations(cfg.DBDSN)
 
 	// Connect to DB
 	ctx := context.Background()

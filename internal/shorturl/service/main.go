@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"net/url"
+	"strings"
 	"time"
 
 	db "url_shortner_backend/db/output"
@@ -46,9 +47,12 @@ func NewShortURLSvcImp(Repo repo.ShortURLRepository, Logger logger.Logger) *Shor
 }
 
 func (s *ShortURLSvcImp) CreateShortURL(ctx context.Context, input CreateShortURLInput) (CreateShortURLOutput, error) {
+	// Normalize URL - add https:// if no scheme provided
+	longURL := normalizeURL(input.LongURL)
+
 	// Validate URL
-	if _, err := url.ParseRequestURI(input.LongURL); err != nil {
-		s.Logger.Error("invalid url provided", "url", input.LongURL, "error", err)
+	if _, err := url.ParseRequestURI(longURL); err != nil {
+		s.Logger.Error("invalid url provided", "url", longURL, "error", err)
 		return CreateShortURLOutput{}, ErrInvalidURL
 	}
 
@@ -56,7 +60,7 @@ func (s *ShortURLSvcImp) CreateShortURL(ctx context.Context, input CreateShortUR
 	tempCode := "temp"
 	row, err := s.Repo.CreateShortURL(ctx, db.CreateShortURLParams{
 		Code:    tempCode,
-		LongUrl: input.LongURL,
+		LongUrl: longURL,
 	})
 	if err != nil {
 		s.Logger.Error("failed to create short url", "error", err)
@@ -114,6 +118,13 @@ func (s *ShortURLSvcImp) GetLongURL(ctx context.Context, input GetLongURLInput) 
 	return GetLongURLOutput{
 		LongURL: shortURL.LongUrl,
 	}, nil
+}
+
+func normalizeURL(rawURL string) string {
+	if !strings.HasPrefix(rawURL, "http://") && !strings.HasPrefix(rawURL, "https://") {
+		return "https://" + rawURL
+	}
+	return rawURL
 }
 
 const base62Chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
