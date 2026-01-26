@@ -23,10 +23,14 @@ func NewEchoServer(svcs *internal.AppServices) *EchoServer {
 
 	// CORS middleware - allow credentials (cookies) from frontend
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:5173", "http://127.0.0.1:5173"},
-		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions},
-		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
-		AllowCredentials: true,
+		AllowHeaders:     []string{"Content-Type", "Authorization"},
+		AllowCredentials: true, // Required because you use credentials: "include"
+		AllowOrigins: []string{
+			"http://localhost:5173",
+			"http://192.168.1.3:5173",
+		},
+		AllowMethods:  []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodOptions},
+		ExposeHeaders: []string{"Set-Cookie"},
 	}))
 
 	server := &EchoServer{
