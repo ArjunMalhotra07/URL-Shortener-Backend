@@ -2,15 +2,14 @@ package service
 
 import (
 	"context"
-	"net/url"
 	"time"
 	db "url_shortner_backend/db/output"
 )
 
 type CreateShortURLInput struct {
 	LongURL   string
-	OwnerType string 
-	OwnerID   string 
+	OwnerType string
+	OwnerID   string
 }
 type CreateShortURLOutput struct {
 	ID        int64
@@ -23,7 +22,8 @@ type CreateShortURLOutput struct {
 
 func (s *ShortURLSvcImp) CreateShortURL(ctx context.Context, input CreateShortURLInput) (CreateShortURLOutput, error) {
 	longURL := normalizeURL(input.LongURL)
-	if _, err := url.ParseRequestURI(longURL); err != nil {
+
+	if err := validateURL(longURL); err != nil {
 		s.Logger.Error("invalid url provided", "url", longURL, "error", err)
 		return CreateShortURLOutput{}, ErrInvalidURL
 	}

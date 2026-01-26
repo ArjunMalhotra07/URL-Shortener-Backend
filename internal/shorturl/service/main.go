@@ -2,6 +2,9 @@ package service
 
 import (
 	"context"
+	"errors"
+	"net"
+	"net/url"
 	"strings"
 
 	"url_shortner_backend/internal/shorturl/repo"
@@ -47,4 +50,32 @@ func encodeBase62(num int64) string {
 		num /= 62
 	}
 	return string(encoded)
+}
+
+func validateURL(raw string) error {
+	u, err := url.ParseRequestURI(raw)
+	if err != nil {
+		return errors.New("invalid URL format")
+	}
+
+	// 1️⃣ Allow only http/https
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return errors.New("only http and https URLs are allowed")
+	}
+
+	// 2️⃣ Host must exist and look like a domain
+	host := u.Hostname()
+	if host == "" || !strings.Contains(host, ".") {
+		return errors.New("invalid domain")
+	}
+
+	// 3️⃣ Block localhost & private IPs (security)
+	ip := net.ParseIP(host)
+	if ip != nil {
+		if ip.IsLoopback() || ip.IsPrivate() {
+			return errors.New("private or local addresses are not allowed")
+		}
+	}
+
+	return nil
 }
