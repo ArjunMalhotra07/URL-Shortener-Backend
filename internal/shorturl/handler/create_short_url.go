@@ -6,12 +6,12 @@ import (
 	"github.com/labstack/echo"
 )
 
-type CreateShortURLResponse struct {
+type CreateShortURLRes struct {
 	Message string `json:"message"`
 }
 
 func (h *ShortURLHandler) CreateShortURL(c echo.Context) error {
-	return c.JSON(http.StatusCreated, CreateShortURLResponse{
+	return c.JSON(http.StatusCreated, CreateShortURLRes{
 		Message: "Short url created successfully",
 	})
 }

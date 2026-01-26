@@ -1,8 +1,32 @@
 version: "3.9"
+
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: url-shortener-db
+    environment:
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: apppass
+      POSTGRES_DB: shorturl
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
   api:
-    build: .
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: url-shortener-api
+    depends_on:
+      - db
+    env_file:
+      - ../.env.local
     ports:
       - "8080:8080"
     environment:
-      - PORT=8080
+      # Ensure APP_ENV defaults to prod inside container unless overridden
+      APP_ENV: prod
+
+volumes:
+  pgdata:

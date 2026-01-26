@@ -11,43 +11,49 @@ import (
 	"url_shortner_backend/pkg/config"
 	"url_shortner_backend/pkg/httpserver"
 	"url_shortner_backend/pkg/logger"
+	"url_shortner_backend/pkg/postgres"
 )
 
 func main() {
-	//1. get config
+	// Load config
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		panic("couldn't start server no config found")
 	}
-	//2. get logger
-	logger := logger.NewZeroLogger()
-	//3. get services
-	// svcs := services.NewServices(models.Params{
-	// 	Config: cfg,
-	// 	Logger: logger,
-	// })
-	//4. get server
-	httpServer := httpserver.NewEchoServer()
-	// 5. Init app
-	srv := NewServer(ServerParams{
-		Config: cfg,
-		Http:   httpServer,
-		Logger: logger,
-		// Services: svcs,
+	// Load logger
+	logr := logger.NewZeroLogger()
+
+	// Connect to DB
+	ctx := context.Background()
+	pool, err := postgres.NewPool(ctx, postgres.Params{
+		DSN:             cfg.DBDSN,
+		MinConns:        cfg.DBMinConns,
+		MaxConns:        cfg.DBMaxConns,
+		MaxConnLifetime: time.Duration(cfg.DBMaxConnLifetimeSeconds) * time.Second,
 	})
-	//! Start server
+	if err != nil {
+		log.Fatalf("connect db: %v", err)
+	}
+	defer pool.Close()
+	// Get services
+
+	// Server
+	svr := httpserver.EchoServer()
+
 	go func() {
-		logger.Info("Starting server on port " + cfg.ServerPort)
-		if err := srv.Http.Start(cfg.ServerPort); err != nil {
-			log.Fatal("shutting down the server")
+		logr.Info("Starting server", "addr", cfg.ServerPort)
+		if err := svr.Start(cfg.ServerPort); err != nil {
+			log.Fatal("server stopped: ", err)
 		}
 	}()
+
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := srv.Http.Shutdown(ctx); err != nil {
+	if err := svr.Shutdown(shutdownCtx); err != nil {
 		log.Fatal(err)
 	}
 }
