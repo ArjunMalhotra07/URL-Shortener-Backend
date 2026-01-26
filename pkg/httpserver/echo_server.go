@@ -39,5 +39,6 @@ func (s *EchoServer) setupRoutes() {
 
 	// Short URL routes
 	apiV1.POST("/shorten", s.svcs.ShortURL.CreateShortURL)
+	apiV1.GET("/my-urls", s.svcs.ShortURL.GetMyURLs)
 	apiV1.GET("/:code", s.svcs.ShortURL.GetOriginalURL)
 }

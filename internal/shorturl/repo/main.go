@@ -10,6 +10,8 @@ type ShortURLRepository interface {
 	CreateShortURL(ctx context.Context, params db.CreateShortURLParams) (db.CreateShortURLRow, error)
 	UpdateShortURLCode(ctx context.Context, params db.UpdateShortURLCodeParams) (db.UpdateShortURLCodeRow, error)
 	GetShortURLByCode(ctx context.Context, code string) (db.ShortUrl, error)
+	GetShortURLsByOwner(ctx context.Context, params db.GetShortURLsByOwnerParams) ([]db.ShortUrl, error)
+	TransferAnonymousURLsToUser(ctx context.Context, params db.TransferAnonymousURLsToUserParams) error
 }
 
 type ShortURLRepoImp struct {
@@ -36,4 +38,12 @@ func (r *ShortURLRepoImp) UpdateShortURLCode(ctx context.Context, params db.Upda
 
 func (r *ShortURLRepoImp) GetShortURLByCode(ctx context.Context, code string) (db.ShortUrl, error) {
 	return r.Queries.GetShortURLByCode(ctx, code)
+}
+
+func (r *ShortURLRepoImp) GetShortURLsByOwner(ctx context.Context, params db.GetShortURLsByOwnerParams) ([]db.ShortUrl, error) {
+	return r.Queries.GetShortURLsByOwner(ctx, params)
+}
+
+func (r *ShortURLRepoImp) TransferAnonymousURLsToUser(ctx context.Context, params db.TransferAnonymousURLsToUserParams) error {
+	return r.Queries.TransferAnonymousURLsToUser(ctx, params)
 }

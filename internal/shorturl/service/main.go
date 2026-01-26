@@ -12,13 +12,16 @@ import (
 )
 
 type CreateShortURLInput struct {
-	LongURL string
+	LongURL   string
+	OwnerType string // "user" or "anonymous"
+	OwnerID   string // user_id or anon_id
 }
 
 type CreateShortURLOutput struct {
-	ID      int64
-	Code    string
-	LongURL string
+	ID        int64
+	Code      string
+	LongURL   string
+	OwnerType string
 }
 
 type GetLongURLInput struct {
@@ -29,9 +32,33 @@ type GetLongURLOutput struct {
 	LongURL string
 }
 
+type GetMyURLsInput struct {
+	OwnerType string
+	OwnerID   string
+}
+
+type ShortURLItem struct {
+	ID        int64
+	Code      string
+	LongURL   string
+	IsActive  bool
+	CreatedAt time.Time
+}
+
+type GetMyURLsOutput struct {
+	URLs []ShortURLItem
+}
+
+type TransferURLsInput struct {
+	AnonID string
+	UserID string
+}
+
 type ShortURLSvc interface {
 	CreateShortURL(ctx context.Context, input CreateShortURLInput) (CreateShortURLOutput, error)
 	GetLongURL(ctx context.Context, input GetLongURLInput) (GetLongURLOutput, error)
+	GetMyURLs(ctx context.Context, input GetMyURLsInput) (GetMyURLsOutput, error)
+	TransferURLsToUser(ctx context.Context, input TransferURLsInput) error
 }
 
 type ShortURLSvcImp struct {
@@ -56,11 +83,19 @@ func (s *ShortURLSvcImp) CreateShortURL(ctx context.Context, input CreateShortUR
 		return CreateShortURLOutput{}, ErrInvalidURL
 	}
 
+	// Determine owner type
+	ownerType := db.OwnerTypeEnumAnonymous
+	if input.OwnerType == "user" {
+		ownerType = db.OwnerTypeEnumUser
+	}
+
 	// Insert with temporary code
 	tempCode := "temp"
 	row, err := s.Repo.CreateShortURL(ctx, db.CreateShortURLParams{
-		Code:    tempCode,
-		LongUrl: longURL,
+		Code:      tempCode,
+		LongUrl:   longURL,
+		OwnerType: ownerType,
+		OwnerID:   input.OwnerID,
 	})
 	if err != nil {
 		s.Logger.Error("failed to create short url", "error", err)
@@ -80,12 +115,13 @@ func (s *ShortURLSvcImp) CreateShortURL(ctx context.Context, input CreateShortUR
 		return CreateShortURLOutput{}, ErrURLCodeUpdate
 	}
 
-	s.Logger.Info("short url created", "id", updatedRow.ID, "code", updatedRow.Code)
+	s.Logger.Info("short url created", "id", updatedRow.ID, "code", updatedRow.Code, "owner_type", updatedRow.OwnerType)
 
 	return CreateShortURLOutput{
-		ID:      updatedRow.ID,
-		Code:    updatedRow.Code,
-		LongURL: updatedRow.LongUrl,
+		ID:        updatedRow.ID,
+		Code:      updatedRow.Code,
+		LongURL:   updatedRow.LongUrl,
+		OwnerType: string(updatedRow.OwnerType),
 	}, nil
 }
 
@@ -118,6 +154,61 @@ func (s *ShortURLSvcImp) GetLongURL(ctx context.Context, input GetLongURLInput) 
 	return GetLongURLOutput{
 		LongURL: shortURL.LongUrl,
 	}, nil
+}
+
+func (s *ShortURLSvcImp) GetMyURLs(ctx context.Context, input GetMyURLsInput) (GetMyURLsOutput, error) {
+	if input.OwnerID == "" {
+		s.Logger.Error("empty owner id provided")
+		return GetMyURLsOutput{}, ErrInvalidOwner
+	}
+
+	ownerType := db.OwnerTypeEnumAnonymous
+	if input.OwnerType == "user" {
+		ownerType = db.OwnerTypeEnumUser
+	}
+
+	urls, err := s.Repo.GetShortURLsByOwner(ctx, db.GetShortURLsByOwnerParams{
+		OwnerType: ownerType,
+		OwnerID:   input.OwnerID,
+	})
+	if err != nil {
+		s.Logger.Error("failed to get urls by owner", "owner_id", input.OwnerID, "error", err)
+		return GetMyURLsOutput{}, ErrURLFetch
+	}
+
+	items := make([]ShortURLItem, len(urls))
+	for i, u := range urls {
+		items[i] = ShortURLItem{
+			ID:        u.ID,
+			Code:      u.Code,
+			LongURL:   u.LongUrl,
+			IsActive:  u.IsActive,
+			CreatedAt: u.CreatedAt.Time,
+		}
+	}
+
+	s.Logger.Info("urls retrieved", "owner_id", input.OwnerID, "count", len(items))
+
+	return GetMyURLsOutput{URLs: items}, nil
+}
+
+func (s *ShortURLSvcImp) TransferURLsToUser(ctx context.Context, input TransferURLsInput) error {
+	if input.AnonID == "" || input.UserID == "" {
+		s.Logger.Error("empty anon_id or user_id")
+		return ErrInvalidOwner
+	}
+
+	err := s.Repo.TransferAnonymousURLsToUser(ctx, db.TransferAnonymousURLsToUserParams{
+		OwnerID:   input.AnonID,
+		OwnerID_2: input.UserID,
+	})
+	if err != nil {
+		s.Logger.Error("failed to transfer urls", "anon_id", input.AnonID, "user_id", input.UserID, "error", err)
+		return ErrURLTransfer
+	}
+
+	s.Logger.Info("urls transferred", "anon_id", input.AnonID, "user_id", input.UserID)
+	return nil
 }
 
 func normalizeURL(rawURL string) string {

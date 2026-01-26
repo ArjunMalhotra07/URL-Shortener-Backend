@@ -5,14 +5,76 @@
 package db
 
 import (
+	"database/sql/driver"
+	"fmt"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type OwnerTypeEnum string
+
+const (
+	OwnerTypeEnumUser      OwnerTypeEnum = "user"
+	OwnerTypeEnumAnonymous OwnerTypeEnum = "anonymous"
+)
+
+func (e *OwnerTypeEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = OwnerTypeEnum(s)
+	case string:
+		*e = OwnerTypeEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for OwnerTypeEnum: %T", src)
+	}
+	return nil
+}
+
+type NullOwnerTypeEnum struct {
+	OwnerTypeEnum OwnerTypeEnum `json:"owner_type_enum"`
+	Valid         bool          `json:"valid"` // Valid is true if OwnerTypeEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullOwnerTypeEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.OwnerTypeEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.OwnerTypeEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullOwnerTypeEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.OwnerTypeEnum), nil
+}
+
+func (e OwnerTypeEnum) Valid() bool {
+	switch e {
+	case OwnerTypeEnumUser,
+		OwnerTypeEnumAnonymous:
+		return true
+	}
+	return false
+}
+
+func AllOwnerTypeEnumValues() []OwnerTypeEnum {
+	return []OwnerTypeEnum{
+		OwnerTypeEnumUser,
+		OwnerTypeEnumAnonymous,
+	}
+}
 
 type ShortUrl struct {
 	ID        int64              `json:"id"`
 	Code      string             `json:"code"`
 	LongUrl   string             `json:"long_url"`
-	OwnerID   pgtype.Int8        `json:"owner_id"`
+	OwnerType OwnerTypeEnum      `json:"owner_type"`
+	OwnerID   string             `json:"owner_id"`
 	IsActive  bool               `json:"is_active"`
 	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`

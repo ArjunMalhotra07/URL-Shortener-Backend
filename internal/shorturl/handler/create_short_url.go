@@ -6,7 +6,13 @@ import (
 
 	"url_shortner_backend/internal/shorturl/service"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+)
+
+const (
+	AnonIDCookieName = "anon_id"
+	CookieMaxAge     = 365 * 24 * 60 * 60 // 1 year in seconds
 )
 
 type CreateShortURLReq struct {
@@ -14,8 +20,9 @@ type CreateShortURLReq struct {
 }
 
 type CreateShortURLRes struct {
-	Code    string `json:"code"`
-	LongURL string `json:"long_url"`
+	Code      string `json:"code"`
+	LongURL   string `json:"long_url"`
+	OwnerType string `json:"owner_type"`
 }
 
 type ErrorRes struct {
@@ -32,8 +39,18 @@ func (h *ShortURLHandler) CreateShortURL(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorRes{Error: "long_url is required"})
 	}
 
+	// Get or create anon_id from cookie
+	anonID := getOrCreateAnonID(c)
+
+	// TODO: Check if user is authenticated (JWT), use user_id instead
+	// For now, always use anonymous
+	ownerType := "anonymous"
+	ownerID := anonID
+
 	output, err := h.Svc.CreateShortURL(c.Request().Context(), service.CreateShortURLInput{
-		LongURL: req.LongURL,
+		LongURL:   req.LongURL,
+		OwnerType: ownerType,
+		OwnerID:   ownerID,
 	})
 	if err != nil {
 		switch {
@@ -47,7 +64,32 @@ func (h *ShortURLHandler) CreateShortURL(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, CreateShortURLRes{
-		Code:    output.Code,
-		LongURL: output.LongURL,
+		Code:      output.Code,
+		LongURL:   output.LongURL,
+		OwnerType: output.OwnerType,
 	})
+}
+
+// getOrCreateAnonID gets existing anon_id from cookie or creates a new one
+func getOrCreateAnonID(c echo.Context) string {
+	cookie, err := c.Cookie(AnonIDCookieName)
+	if err == nil && cookie.Value != "" {
+		return cookie.Value
+	}
+
+	// Generate new UUID
+	anonID := uuid.New().String()
+
+	// Set cookie
+	c.SetCookie(&http.Cookie{
+		Name:     AnonIDCookieName,
+		Value:    anonID,
+		Path:     "/",
+		MaxAge:   CookieMaxAge,
+		HttpOnly: true,
+		Secure:   true, // Set to false for local dev if not using HTTPS
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	return anonID
 }

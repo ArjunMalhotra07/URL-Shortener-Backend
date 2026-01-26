@@ -1,10 +1,13 @@
 -- +goose Up
+CREATE TYPE owner_type_enum AS ENUM ('user', 'anonymous');
+
 -- +goose StatementBegin
 CREATE TABLE short_urls (
   id          BIGSERIAL PRIMARY KEY,
   code        VARCHAR(10) NOT NULL UNIQUE,
   long_url    TEXT NOT NULL,
-  owner_id    BIGINT NULL,
+  owner_type  owner_type_enum NOT NULL DEFAULT 'anonymous',
+  owner_id    TEXT NOT NULL,
   is_active   BOOLEAN NOT NULL DEFAULT TRUE,
   expires_at  TIMESTAMPTZ NULL,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -12,7 +15,7 @@ CREATE TABLE short_urls (
 );
 -- +goose StatementEnd
 
-CREATE INDEX idx_short_urls_owner_id ON short_urls (owner_id);
+CREATE INDEX idx_short_urls_owner ON short_urls (owner_type, owner_id);
 CREATE INDEX idx_short_urls_expires_at ON short_urls (expires_at);
 
 -- +goose StatementBegin
@@ -35,3 +38,4 @@ FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 DROP TRIGGER IF EXISTS trg_short_urls_set_updated_at ON short_urls;
 DROP FUNCTION IF EXISTS set_updated_at;
 DROP TABLE IF EXISTS short_urls;
+DROP TYPE IF EXISTS owner_type_enum;
