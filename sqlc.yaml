@@ -1,10 +1,9 @@
 version: "2"
 sql:
-  - engine: "mysql"
-    queries: [
-        "db/queries",
-      ]
-    schema: "db/migrations" # all migration files will be here
+  - engine: "postgresql"
+    queries:
+      - "db/queries/short_url"
+    schema: "db/migrations"
     gen:
       go:
         package: "db"
