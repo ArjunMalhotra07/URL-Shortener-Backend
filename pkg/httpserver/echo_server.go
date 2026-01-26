@@ -7,6 +7,7 @@ import (
 	"url_shortner_backend/internal"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 type EchoServer struct {
@@ -19,6 +20,14 @@ func (s *EchoServer) Shutdown(ctx context.Context) error { return s.e.Shutdown(c
 
 func NewEchoServer(svcs *internal.AppServices) *EchoServer {
 	e := echo.New()
+
+	// CORS middleware - allow credentials (cookies) from frontend
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     []string{"http://localhost:5173", "http://127.0.0.1:5173"},
+		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions},
+		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+		AllowCredentials: true,
+	}))
 
 	server := &EchoServer{
 		e:    e,
