@@ -28,6 +28,8 @@ type CreateShortURLRes struct {
 	Code      string `json:"code"`
 	LongURL   string `json:"long_url"`
 	OwnerType string `json:"owner_type"`
+	IsActive  bool   `json:"is_active"`
+	CreatedAt string `json:"created_at"`
 }
 
 type ErrorRes struct {
@@ -72,6 +74,8 @@ func (h *ShortURLHandler) CreateShortURL(c echo.Context) error {
 		Code:      output.Code,
 		LongURL:   output.LongURL,
 		OwnerType: output.OwnerType,
+		IsActive:  output.IsActive,
+		CreatedAt: output.CreatedAt.Format("2006-01-02T15:04:05Z"),
 	})
 }
 

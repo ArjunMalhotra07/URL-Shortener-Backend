@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"net/url"
+	"time"
 	db "url_shortner_backend/db/output"
 )
 
@@ -16,6 +17,8 @@ type CreateShortURLOutput struct {
 	Code      string
 	LongURL   string
 	OwnerType string
+	IsActive  bool
+	CreatedAt time.Time
 }
 
 func (s *ShortURLSvcImp) CreateShortURL(ctx context.Context, input CreateShortURLInput) (CreateShortURLOutput, error) {
@@ -60,5 +63,7 @@ func (s *ShortURLSvcImp) CreateShortURL(ctx context.Context, input CreateShortUR
 		Code:      updatedRow.Code,
 		LongURL:   updatedRow.LongUrl,
 		OwnerType: string(updatedRow.OwnerType),
+		IsActive:  true,
+		CreatedAt: updatedRow.CreatedAt.Time,
 	}, nil
 }
