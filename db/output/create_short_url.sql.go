@@ -11,6 +11,19 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countURLsCreatedToday = `-- name: CountURLsCreatedToday :one
+SELECT COUNT(*) FROM short_urls
+WHERE owner_id = $1
+AND created_at >= CURRENT_DATE
+`
+
+func (q *Queries) CountURLsCreatedToday(ctx context.Context, ownerID string) (int64, error) {
+	row := q.db.QueryRow(ctx, countURLsCreatedToday, ownerID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createShortURL = `-- name: CreateShortURL :one
 INSERT INTO short_urls (code, long_url, owner_type, owner_id)
 VALUES ($1, $2, $3, $4)

@@ -24,3 +24,8 @@ ORDER BY created_at DESC;
 UPDATE short_urls
 SET owner_type = 'user', owner_id = $2
 WHERE owner_type = 'anonymous' AND owner_id = $1;
+
+-- name: CountURLsCreatedToday :one
+SELECT COUNT(*) FROM short_urls
+WHERE owner_id = $1
+AND created_at >= CURRENT_DATE;
