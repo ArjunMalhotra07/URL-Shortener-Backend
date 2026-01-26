@@ -2,7 +2,11 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
+	"time"
 
 	"url_shortner_backend/internal/shorturl/service"
 
@@ -11,8 +15,9 @@ import (
 )
 
 const (
-	AnonIDCookieName = "anon_id"
-	CookieMaxAge     = 365 * 24 * 60 * 60 // 1 year in seconds
+	AnonIDCookieName   = "anon_id"
+	CookieMaxAge       = 365 * 24 * 60 * 60 // 1 year in seconds
+	CookieRefreshAfter = 335 * 24 * 60 * 60 // Refresh if older than 11 months (335 days)
 )
 
 type CreateShortURLReq struct {
@@ -70,26 +75,48 @@ func (h *ShortURLHandler) CreateShortURL(c echo.Context) error {
 	})
 }
 
-// getOrCreateAnonID gets existing anon_id from cookie or creates a new one
 func getOrCreateAnonID(c echo.Context) string {
 	cookie, err := c.Cookie(AnonIDCookieName)
 	if err == nil && cookie.Value != "" {
-		return cookie.Value
+		anonID, createdAt, valid := parseAnonCookie(cookie.Value)
+		if valid {
+			if time.Since(createdAt).Seconds() > CookieRefreshAfter {
+				setAnonCookie(c, anonID)
+			}
+			return anonID
+		}
+	}
+	anonID := uuid.New().String()
+	setAnonCookie(c, anonID)
+
+	return anonID
+}
+
+func parseAnonCookie(value string) (string, time.Time, bool) {
+	parts := strings.Split(value, "_")
+	if len(parts) != 2 {
+		return "", time.Time{}, false
 	}
 
-	// Generate new UUID
-	anonID := uuid.New().String()
+	anonID := parts[0]
+	timestamp, err := strconv.ParseInt(parts[1], 10, 64)
+	if err != nil {
+		return "", time.Time{}, false
+	}
 
-	// Set cookie
+	return anonID, time.Unix(timestamp, 0), true
+}
+
+func setAnonCookie(c echo.Context, anonID string) {
+	cookieValue := fmt.Sprintf("%s_%d", anonID, time.Now().Unix())
+
 	c.SetCookie(&http.Cookie{
 		Name:     AnonIDCookieName,
-		Value:    anonID,
+		Value:    cookieValue,
 		Path:     "/",
 		MaxAge:   CookieMaxAge,
 		HttpOnly: true,
-		Secure:   true, // Set to false for local dev if not using HTTPS
+		Secure:   false, // Set to true in production with HTTPS
 		SameSite: http.SameSiteLaxMode,
 	})
-
-	return anonID
 }
