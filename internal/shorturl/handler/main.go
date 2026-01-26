@@ -6,6 +6,6 @@ type ShortURLHandler struct {
 	Svc service.ShortURLSvc
 }
 
-func GetShortURLHandler(svc service.ShortURLSvc) *ShortURLHandler {
+func NewShortURLHandler(svc service.ShortURLSvc) *ShortURLHandler {
 	return &ShortURLHandler{Svc: svc}
 }
