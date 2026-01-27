@@ -18,7 +18,12 @@ WHERE code = $1;
 SELECT id, code, long_url, owner_type, owner_id, is_active, expires_at, created_at, updated_at
 FROM short_urls
 WHERE owner_type = $1 AND owner_id = $2
-ORDER BY created_at DESC;
+ORDER BY created_at DESC
+LIMIT $3 OFFSET $4;
+
+-- name: CountURLsByOwner :one
+SELECT COUNT(*) FROM short_urls
+WHERE owner_type = $1 AND owner_id = $2;
 
 -- name: TransferAnonymousURLsToUser :exec
 UPDATE short_urls

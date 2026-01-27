@@ -3,6 +3,8 @@ package handler
 import (
 	"errors"
 	"net/http"
+	"strconv"
+	"time"
 
 	"url_shortner_backend/internal/shorturl/service"
 
@@ -17,10 +19,27 @@ type URLItem struct {
 }
 
 type GetMyURLsRes struct {
-	URLs []URLItem `json:"urls"`
+	URLs   []URLItem `json:"urls"`
+	Total  int64     `json:"total"`
+	Limit  int32     `json:"limit"`
+	Offset int32     `json:"offset"`
 }
 
 func (h *ShortURLHandler) GetMyURLs(c echo.Context) error {
+	// Parse pagination params
+	limit := int32(10)
+	offset := int32(0)
+	if l := c.QueryParam("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 && parsed <= 100 {
+			limit = int32(parsed)
+		}
+	}
+	if o := c.QueryParam("offset"); o != "" {
+		if parsed, err := strconv.Atoi(o); err == nil && parsed >= 0 {
+			offset = int32(parsed)
+		}
+	}
+
 	// Get anon_id from cookie
 	anonID := getOrCreateAnonID(c)
 
@@ -31,6 +50,8 @@ func (h *ShortURLHandler) GetMyURLs(c echo.Context) error {
 	output, err := h.Svc.GetMyURLs(c.Request().Context(), service.GetMyURLsInput{
 		OwnerType: ownerType,
 		OwnerID:   ownerID,
+		Limit:     limit,
+		Offset:    offset,
 	})
 	if err != nil {
 		switch {
@@ -49,9 +70,14 @@ func (h *ShortURLHandler) GetMyURLs(c echo.Context) error {
 			Code:      u.Code,
 			LongURL:   u.LongURL,
 			IsActive:  u.IsActive,
-			CreatedAt: u.CreatedAt.Format("2006-01-02T15:04:05Z"),
+			CreatedAt: u.CreatedAt.UTC().Format(time.RFC3339),
 		}
 	}
 
-	return c.JSON(http.StatusOK, GetMyURLsRes{URLs: urls})
+	return c.JSON(http.StatusOK, GetMyURLsRes{
+		URLs:   urls,
+		Total:  output.Total,
+		Limit:  limit,
+		Offset: offset,
+	})
 }

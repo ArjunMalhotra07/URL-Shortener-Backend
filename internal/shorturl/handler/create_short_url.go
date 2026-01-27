@@ -77,7 +77,7 @@ func (h *ShortURLHandler) CreateShortURL(c echo.Context) error {
 		LongURL:   output.LongURL,
 		OwnerType: output.OwnerType,
 		IsActive:  output.IsActive,
-		CreatedAt: output.CreatedAt.Format("2006-01-02T15:04:05Z"),
+		CreatedAt: output.CreatedAt.UTC().Format(time.RFC3339),
 	})
 }
 

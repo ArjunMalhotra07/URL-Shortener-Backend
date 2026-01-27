@@ -13,6 +13,7 @@ type ShortURLRepository interface {
 	GetShortURLsByOwner(ctx context.Context, params db.GetShortURLsByOwnerParams) ([]db.ShortUrl, error)
 	TransferAnonymousURLsToUser(ctx context.Context, params db.TransferAnonymousURLsToUserParams) error
 	CountURLsCreatedToday(ctx context.Context, ownerID string) (int64, error)
+	CountURLsByOwner(ctx context.Context, params db.CountURLsByOwnerParams) (int64, error)
 }
 
 type ShortURLRepoImp struct {
@@ -51,4 +52,8 @@ func (r *ShortURLRepoImp) TransferAnonymousURLsToUser(ctx context.Context, param
 
 func (r *ShortURLRepoImp) CountURLsCreatedToday(ctx context.Context, ownerID string) (int64, error) {
 	return r.Queries.CountURLsCreatedToday(ctx, ownerID)
+}
+
+func (r *ShortURLRepoImp) CountURLsByOwner(ctx context.Context, params db.CountURLsByOwnerParams) (int64, error) {
+	return r.Queries.CountURLsByOwner(ctx, params)
 }

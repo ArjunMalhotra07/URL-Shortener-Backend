@@ -11,6 +11,23 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countURLsByOwner = `-- name: CountURLsByOwner :one
+SELECT COUNT(*) FROM short_urls
+WHERE owner_type = $1 AND owner_id = $2
+`
+
+type CountURLsByOwnerParams struct {
+	OwnerType OwnerTypeEnum `json:"owner_type"`
+	OwnerID   string        `json:"owner_id"`
+}
+
+func (q *Queries) CountURLsByOwner(ctx context.Context, arg CountURLsByOwnerParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countURLsByOwner, arg.OwnerType, arg.OwnerID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countURLsCreatedToday = `-- name: CountURLsCreatedToday :one
 SELECT COUNT(*) FROM short_urls
 WHERE owner_id = $1
@@ -95,15 +112,23 @@ SELECT id, code, long_url, owner_type, owner_id, is_active, expires_at, created_
 FROM short_urls
 WHERE owner_type = $1 AND owner_id = $2
 ORDER BY created_at DESC
+LIMIT $3 OFFSET $4
 `
 
 type GetShortURLsByOwnerParams struct {
 	OwnerType OwnerTypeEnum `json:"owner_type"`
 	OwnerID   string        `json:"owner_id"`
+	Limit     int32         `json:"limit"`
+	Offset    int32         `json:"offset"`
 }
 
 func (q *Queries) GetShortURLsByOwner(ctx context.Context, arg GetShortURLsByOwnerParams) ([]ShortUrl, error) {
-	rows, err := q.db.Query(ctx, getShortURLsByOwner, arg.OwnerType, arg.OwnerID)
+	rows, err := q.db.Query(ctx, getShortURLsByOwner,
+		arg.OwnerType,
+		arg.OwnerID,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}

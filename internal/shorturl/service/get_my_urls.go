@@ -9,9 +9,12 @@ import (
 type GetMyURLsInput struct {
 	OwnerType string
 	OwnerID   string
+	Limit     int32
+	Offset    int32
 }
 type GetMyURLsOutput struct {
-	URLs []ShortURLItem
+	URLs  []ShortURLItem
+	Total int64
 }
 type ShortURLItem struct {
 	ID        int64
@@ -35,9 +38,20 @@ func (s *ShortURLSvcImp) GetMyURLs(ctx context.Context, input GetMyURLsInput) (G
 	urls, err := s.Repo.GetShortURLsByOwner(ctx, db.GetShortURLsByOwnerParams{
 		OwnerType: ownerType,
 		OwnerID:   input.OwnerID,
+		Limit:     input.Limit,
+		Offset:    input.Offset,
 	})
 	if err != nil {
 		s.Logger.Error("failed to get urls by owner", "owner_id", input.OwnerID, "error", err)
+		return GetMyURLsOutput{}, ErrURLFetch
+	}
+
+	total, err := s.Repo.CountURLsByOwner(ctx, db.CountURLsByOwnerParams{
+		OwnerType: ownerType,
+		OwnerID:   input.OwnerID,
+	})
+	if err != nil {
+		s.Logger.Error("failed to count urls by owner", "owner_id", input.OwnerID, "error", err)
 		return GetMyURLsOutput{}, ErrURLFetch
 	}
 
@@ -52,7 +66,7 @@ func (s *ShortURLSvcImp) GetMyURLs(ctx context.Context, input GetMyURLsInput) (G
 		}
 	}
 
-	s.Logger.Info("urls retrieved", "owner_id", input.OwnerID, "count", len(items))
+	s.Logger.Info("urls retrieved", "owner_id", input.OwnerID, "count", len(items), "total", total)
 
-	return GetMyURLsOutput{URLs: items}, nil
+	return GetMyURLsOutput{URLs: items, Total: total}, nil
 }
