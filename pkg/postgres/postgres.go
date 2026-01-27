@@ -8,12 +8,12 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Params holds connection settings. If DSN is set, the other fields are ignored.
+// Params holds connection settings.
 type Params struct {
-	DSN                  string
-	MinConns             int32
-	MaxConns             int32
-	MaxConnLifetime      time.Duration
+	DSN             string
+	MaxConns        int32
+	MaxConnLifetime time.Duration
+	MaxConnIdleTime time.Duration
 }
 
 // NewPool creates a pgx connection pool with sensible defaults.
@@ -28,14 +28,14 @@ func NewPool(ctx context.Context, p Params) (*pgxpool.Pool, error) {
 	}
 
 	// Apply pool tuning.
-	if p.MinConns > 0 {
-		cfg.MinConns = p.MinConns
-	}
 	if p.MaxConns > 0 {
 		cfg.MaxConns = p.MaxConns
 	}
 	if p.MaxConnLifetime > 0 {
 		cfg.MaxConnLifetime = p.MaxConnLifetime
+	}
+	if p.MaxConnIdleTime > 0 {
+		cfg.MaxConnIdleTime = p.MaxConnIdleTime
 	}
 
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)

@@ -33,9 +33,9 @@ func main() {
 	ctx := context.Background()
 	pool, err := postgres.NewPool(ctx, postgres.Params{
 		DSN:             cfg.DBDSN,
-		MinConns:        cfg.DBMinConns,
 		MaxConns:        cfg.DBMaxConns,
 		MaxConnLifetime: time.Duration(cfg.DBMaxConnLifetimeSeconds) * time.Second,
+		MaxConnIdleTime: time.Duration(cfg.DBMaxConnIdleTimeSeconds) * time.Second,
 	})
 	if err != nil {
 		log.Fatalf("connect db: %v", err)

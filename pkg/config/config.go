@@ -12,10 +12,11 @@ type Config struct {
 	APP_ENV    string `env:"APP_ENV" envDefault:"prod"`
 	ServerPort string `env:"SERVER_PORT" envDefault:":8080"`
 	DBDSN      string `env:"DB_DSN" envDefault:""`
-	DBMinConns int32  `env:"DB_MIN_CONNS" envDefault:"1"`
-	DBMaxConns int32  `env:"DB_MAX_CONNS" envDefault:"10"`
-	// Lifetime caps how long a connection can live; zero means unlimited.
-	DBMaxConnLifetimeSeconds int32 `env:"DB_MAX_CONN_LIFETIME_SECONDS" envDefault:"0"`
+	DBMaxConns int32  `env:"DB_MAX_CONNS" envDefault:"20"`
+	// MaxConnLifetime caps how long a connection can live before being closed and replaced.
+	DBMaxConnLifetimeSeconds int32 `env:"DB_MAX_CONN_LIFETIME_SECONDS" envDefault:"1800"`
+	// MaxConnIdleTime caps how long an idle connection stays in the pool.
+	DBMaxConnIdleTimeSeconds int32 `env:"DB_MAX_CONN_IDLE_TIME_SECONDS" envDefault:"300"`
 }
 
 func LoadConfig() (Config, error) {
