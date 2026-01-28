@@ -18,21 +18,22 @@ type AppServices struct {
 }
 
 type AppServicesParams struct {
-	Queries     *db.Queries
-	Logger      logger.Logger
-	JWT         *jwt.JWTManager
-	FrontendURL string
+	Queries       *db.Queries
+	Logger        logger.Logger
+	JWT           *jwt.JWTManager
+	FrontendURL   string
+	DailyURLQuota int
 }
 
 func GetAppServices(p AppServicesParams) *AppServices {
 	// Short URL
 	shortURLRepo := repo.NewShortURLRepoImp(repo.ShortURLRepoParams{Queries: p.Queries})
-	shortURLSvc := service.NewShortURLSvcImp(shortURLRepo, p.Logger)
+	shortURLSvc := service.NewShortURLSvcImp(shortURLRepo, p.Logger, p.DailyURLQuota)
 	shortURLHandler := handler.NewShortURLHandler(shortURLSvc, p.FrontendURL)
 
 	// Auth
 	authRepo := authrepo.NewAuthRepoImp(authrepo.AuthRepoParams{Queries: p.Queries})
-	authSvc := authservice.NewAuthSvcImp(authRepo, shortURLRepo, p.JWT, p.Logger)
+	authSvc := authservice.NewAuthSvcImp(authRepo, shortURLRepo, p.JWT, p.Logger, p.DailyURLQuota)
 	authHandler := authhandler.NewAuthHandler(authSvc)
 
 	return &AppServices{

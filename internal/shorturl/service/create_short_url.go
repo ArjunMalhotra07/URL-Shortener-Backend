@@ -6,10 +6,6 @@ import (
 	db "url_shortner_backend/db/output"
 )
 
-const (
-	DailyQuota = 10
-)
-
 type CreateShortURLInput struct {
 	LongURL   string
 	OwnerType string
@@ -38,7 +34,7 @@ func (s *ShortURLSvcImp) CreateShortURL(ctx context.Context, input CreateShortUR
 		s.Logger.Error("failed to count today's urls", "owner_id", input.OwnerID, "error", err)
 		return CreateShortURLOutput{}, ErrURLCreation
 	}
-	if todayCount >= DailyQuota {
+	if int(todayCount) >= s.DailyURLQuota {
 		s.Logger.Info("daily quota exceeded", "owner_id", input.OwnerID, "count", todayCount)
 		return CreateShortURLOutput{}, ErrDailyQuotaExceeded
 	}

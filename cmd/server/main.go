@@ -53,10 +53,11 @@ func main() {
 
 	// Get services
 	svcs := internal.GetAppServices(internal.AppServicesParams{
-		Queries:     queries,
-		Logger:      logr,
-		JWT:         jwtMgr,
-		FrontendURL: cfg.FrontendURL,
+		Queries:       queries,
+		Logger:        logr,
+		JWT:           jwtMgr,
+		FrontendURL:   cfg.FrontendURL,
+		DailyURLQuota: cfg.DailyURLQuota,
 	})
 
 	// Server

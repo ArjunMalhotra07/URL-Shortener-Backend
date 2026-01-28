@@ -25,18 +25,20 @@ type AuthService interface {
 }
 
 type AuthSvcImp struct {
-	Repo         repo.AuthRepository
-	ShortURLRepo shorturlrepo.ShortURLRepository
-	JWT          *jwt.JWTManager
-	Logger       logger.Logger
+	Repo          repo.AuthRepository
+	ShortURLRepo  shorturlrepo.ShortURLRepository
+	JWT           *jwt.JWTManager
+	Logger        logger.Logger
+	DailyURLQuota int
 }
 
-func NewAuthSvcImp(r repo.AuthRepository, shortURLRepo shorturlrepo.ShortURLRepository, jwtMgr *jwt.JWTManager, l logger.Logger) *AuthSvcImp {
+func NewAuthSvcImp(r repo.AuthRepository, shortURLRepo shorturlrepo.ShortURLRepository, jwtMgr *jwt.JWTManager, l logger.Logger, dailyURLQuota int) *AuthSvcImp {
 	return &AuthSvcImp{
-		Repo:         r,
-		ShortURLRepo: shortURLRepo,
-		JWT:          jwtMgr,
-		Logger:       l,
+		Repo:          r,
+		ShortURLRepo:  shortURLRepo,
+		JWT:           jwtMgr,
+		Logger:        l,
+		DailyURLQuota: dailyURLQuota,
 	}
 }
 
@@ -97,8 +99,6 @@ func (s *AuthSvcImp) generateTokens(ctx context.Context, userID, email string) (
 	}, nil
 }
 
-const dailyURLQuota = 10
-
 // transferAnonymousURLsWithQuota transfers anonymous URLs to user, respecting daily quota.
 // Only transfers up to (quota - existing_today) URLs. Excess URLs are not transferred.
 func (s *AuthSvcImp) transferAnonymousURLsWithQuota(ctx context.Context, anonID, userID string) {
@@ -109,7 +109,7 @@ func (s *AuthSvcImp) transferAnonymousURLsWithQuota(ctx context.Context, anonID,
 		return
 	}
 
-	remaining := dailyURLQuota - int(todayCount)
+	remaining := s.DailyURLQuota - int(todayCount)
 	if remaining <= 0 {
 		s.Logger.Info("user at daily quota, skipping anonymous url transfer", "user_id", userID, "today_count", todayCount)
 		return

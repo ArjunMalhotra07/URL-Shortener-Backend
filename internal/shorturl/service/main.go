@@ -21,14 +21,16 @@ type ShortURLSvc interface {
 }
 
 type ShortURLSvcImp struct {
-	Logger logger.Logger
-	Repo   repo.ShortURLRepository
+	Logger        logger.Logger
+	Repo          repo.ShortURLRepository
+	DailyURLQuota int
 }
 
-func NewShortURLSvcImp(Repo repo.ShortURLRepository, Logger logger.Logger) *ShortURLSvcImp {
+func NewShortURLSvcImp(Repo repo.ShortURLRepository, Logger logger.Logger, dailyURLQuota int) *ShortURLSvcImp {
 	return &ShortURLSvcImp{
-		Repo:   Repo,
-		Logger: Logger,
+		Repo:          Repo,
+		Logger:        Logger,
+		DailyURLQuota: dailyURLQuota,
 	}
 }
 
