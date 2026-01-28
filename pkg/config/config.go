@@ -17,6 +17,11 @@ type Config struct {
 	DBMaxConnLifetimeSeconds int32 `env:"DB_MAX_CONN_LIFETIME_SECONDS" envDefault:"1800"`
 	// MaxConnIdleTime caps how long an idle connection stays in the pool.
 	DBMaxConnIdleTimeSeconds int32 `env:"DB_MAX_CONN_IDLE_TIME_SECONDS" envDefault:"300"`
+
+	// JWT settings
+	JWTSecret                  string `env:"JWT_SECRET" envDefault:""`
+	JWTAccessTokenExpiryMins   int    `env:"JWT_ACCESS_TOKEN_EXPIRY_MINS" envDefault:"60"`
+	JWTRefreshTokenExpiryDays  int    `env:"JWT_REFRESH_TOKEN_EXPIRY_DAYS" envDefault:"30"`
 }
 
 func LoadConfig() (Config, error) {

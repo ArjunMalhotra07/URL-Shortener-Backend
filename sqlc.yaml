@@ -3,6 +3,7 @@ sql:
   - engine: "postgresql"
     queries:
       - "db/queries/short_url"
+      - "db/queries/auth"
     schema: "db/migrations"
     gen:
       go:

@@ -46,13 +46,16 @@ func (h *ShortURLHandler) CreateShortURL(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorRes{Error: "long_url is required"})
 	}
 
-	// Get or create anon_id from cookie
-	anonID := getOrCreateAnonID(c)
-
-	// TODO: Check if user is authenticated (JWT), use user_id instead
-	// For now, always use anonymous
-	ownerType := "anonymous"
-	ownerID := anonID
+	// Check if user is authenticated
+	var ownerType, ownerID string
+	if userID := c.Get("user_id"); userID != nil && userID != "" {
+		ownerType = "user"
+		ownerID = userID.(string)
+	} else {
+		// Fall back to anonymous
+		ownerType = "anonymous"
+		ownerID = getOrCreateAnonID(c)
+	}
 
 	output, err := h.Svc.CreateShortURL(c.Request().Context(), service.CreateShortURLInput{
 		LongURL:   req.LongURL,

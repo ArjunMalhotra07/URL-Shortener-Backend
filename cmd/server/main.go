@@ -12,6 +12,7 @@ import (
 	"url_shortner_backend/internal"
 	"url_shortner_backend/pkg/config"
 	"url_shortner_backend/pkg/httpserver"
+	"url_shortner_backend/pkg/jwt"
 	"url_shortner_backend/pkg/logger"
 	"url_shortner_backend/pkg/migrate"
 	"url_shortner_backend/pkg/postgres"
@@ -43,14 +44,22 @@ func main() {
 	defer pool.Close()
 	queries := db.New(pool)
 
+	// JWT Manager
+	jwtMgr := jwt.NewJWTManager(jwt.Config{
+		Secret:             cfg.JWTSecret,
+		AccessTokenExpiry:  time.Duration(cfg.JWTAccessTokenExpiryMins) * time.Minute,
+		RefreshTokenExpiry: time.Duration(cfg.JWTRefreshTokenExpiryDays) * 24 * time.Hour,
+	})
+
 	// Get services
 	svcs := internal.GetAppServices(internal.AppServicesParams{
 		Queries: queries,
 		Logger:  logr,
+		JWT:     jwtMgr,
 	})
 
 	// Server
-	svr := httpserver.NewEchoServer(svcs)
+	svr := httpserver.NewEchoServer(svcs, jwtMgr)
 
 	go func() {
 		logr.Info("Starting server", "addr", cfg.ServerPort)
