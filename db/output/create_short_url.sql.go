@@ -240,6 +240,28 @@ func (q *Queries) TransferAnonymousURLsToUser(ctx context.Context, arg TransferA
 	return err
 }
 
+const transferAnonymousURLsToUserWithLimit = `-- name: TransferAnonymousURLsToUserWithLimit :exec
+UPDATE short_urls
+SET owner_type = 'user', owner_id = $2
+WHERE id IN (
+    SELECT s.id FROM short_urls s
+    WHERE s.owner_type = 'anonymous' AND s.owner_id = $1 AND s.is_deleted = FALSE
+    ORDER BY s.created_at ASC
+    LIMIT $3
+)
+`
+
+type TransferAnonymousURLsToUserWithLimitParams struct {
+	OwnerID   string `json:"owner_id"`
+	OwnerID_2 string `json:"owner_id_2"`
+	Limit     int32  `json:"limit"`
+}
+
+func (q *Queries) TransferAnonymousURLsToUserWithLimit(ctx context.Context, arg TransferAnonymousURLsToUserWithLimitParams) error {
+	_, err := q.db.Exec(ctx, transferAnonymousURLsToUserWithLimit, arg.OwnerID, arg.OwnerID_2, arg.Limit)
+	return err
+}
+
 const updateShortURLCode = `-- name: UpdateShortURLCode :one
 UPDATE short_urls
 SET code = $2

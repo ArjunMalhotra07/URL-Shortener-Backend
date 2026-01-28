@@ -12,6 +12,7 @@ type ShortURLRepository interface {
 	GetShortURLByCode(ctx context.Context, code string) (db.ShortUrl, error)
 	GetShortURLsByOwner(ctx context.Context, params db.GetShortURLsByOwnerParams) ([]db.ShortUrl, error)
 	TransferAnonymousURLsToUser(ctx context.Context, params db.TransferAnonymousURLsToUserParams) error
+	TransferAnonymousURLsToUserWithLimit(ctx context.Context, params db.TransferAnonymousURLsToUserWithLimitParams) error
 	CountURLsCreatedToday(ctx context.Context, ownerID string) (int64, error)
 	CountURLsByOwner(ctx context.Context, params db.CountURLsByOwnerParams) (int64, error)
 	GetURLByCodeAndOwner(ctx context.Context, params db.GetURLByCodeAndOwnerParams) (db.ShortUrl, error)
@@ -51,6 +52,10 @@ func (r *ShortURLRepoImp) GetShortURLsByOwner(ctx context.Context, params db.Get
 
 func (r *ShortURLRepoImp) TransferAnonymousURLsToUser(ctx context.Context, params db.TransferAnonymousURLsToUserParams) error {
 	return r.Queries.TransferAnonymousURLsToUser(ctx, params)
+}
+
+func (r *ShortURLRepoImp) TransferAnonymousURLsToUserWithLimit(ctx context.Context, params db.TransferAnonymousURLsToUserWithLimitParams) error {
+	return r.Queries.TransferAnonymousURLsToUserWithLimit(ctx, params)
 }
 
 func (r *ShortURLRepoImp) CountURLsCreatedToday(ctx context.Context, ownerID string) (int64, error) {

@@ -6,7 +6,6 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	db "url_shortner_backend/db/output"
 	"url_shortner_backend/pkg/hash"
 )
 
@@ -30,18 +29,11 @@ func (s *AuthSvcImp) Login(ctx context.Context, input LoginInput) (AuthOutput, e
 
 	userID := uuidToString(user.ID)
 
-	// Transfer anonymous URLs if anonID provided
+	// Transfer anonymous URLs if anonID provided (with quota limit)
 	if input.AnonID != "" {
-		err = s.ShortURLRepo.TransferAnonymousURLsToUser(ctx, db.TransferAnonymousURLsToUserParams{
-			OwnerID:   input.AnonID,
-			OwnerID_2: userID,
-		})
-		if err != nil {
-			s.Logger.Error("failed to transfer anonymous urls on login", "anon_id", input.AnonID, "user_id", userID, "error", err)
-		} else {
-			s.Logger.Info("transferred anonymous urls on login", "anon_id", input.AnonID, "user_id", userID)
-		}
+		s.transferAnonymousURLsWithQuota(ctx, input.AnonID, userID)
 	}
 
+	s.Logger.Info("user logged in successfully", "email", email, "user_id", userID)
 	return s.generateTokens(ctx, userID, email)
 }

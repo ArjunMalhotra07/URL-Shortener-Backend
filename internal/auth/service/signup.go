@@ -42,18 +42,9 @@ func (s *AuthSvcImp) Signup(ctx context.Context, input SignupInput) (AuthOutput,
 
 	userID := uuidToString(user.ID)
 
-	// Transfer anonymous URLs if anonID provided
+	// Transfer anonymous URLs if anonID provided (with quota limit)
 	if input.AnonID != "" {
-		err = s.ShortURLRepo.TransferAnonymousURLsToUser(ctx, db.TransferAnonymousURLsToUserParams{
-			OwnerID:   input.AnonID,
-			OwnerID_2: userID,
-		})
-		if err != nil {
-			s.Logger.Error("failed to transfer anonymous urls", "anon_id", input.AnonID, "user_id", userID, "error", err)
-			// Don't fail signup for this
-		} else {
-			s.Logger.Info("transferred anonymous urls", "anon_id", input.AnonID, "user_id", userID)
-		}
+		s.transferAnonymousURLsWithQuota(ctx, input.AnonID, userID)
 	}
 
 	return s.generateTokens(ctx, userID, email)

@@ -45,6 +45,16 @@ UPDATE short_urls
 SET owner_type = 'user', owner_id = $2
 WHERE owner_type = 'anonymous' AND owner_id = $1;
 
+-- name: TransferAnonymousURLsToUserWithLimit :exec
+UPDATE short_urls
+SET owner_type = 'user', owner_id = $2
+WHERE id IN (
+    SELECT s.id FROM short_urls s
+    WHERE s.owner_type = 'anonymous' AND s.owner_id = $1 AND s.is_deleted = FALSE
+    ORDER BY s.created_at ASC
+    LIMIT $3
+);
+
 -- name: CountURLsCreatedToday :one
 SELECT COUNT(*) FROM short_urls
 WHERE owner_id = $1

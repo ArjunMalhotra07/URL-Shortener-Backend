@@ -97,6 +97,38 @@ func (s *AuthSvcImp) generateTokens(ctx context.Context, userID, email string) (
 	}, nil
 }
 
+const dailyURLQuota = 10
+
+// transferAnonymousURLsWithQuota transfers anonymous URLs to user, respecting daily quota.
+// Only transfers up to (quota - existing_today) URLs. Excess URLs are not transferred.
+func (s *AuthSvcImp) transferAnonymousURLsWithQuota(ctx context.Context, anonID, userID string) {
+	// Count how many URLs user has already created today
+	todayCount, err := s.ShortURLRepo.CountURLsCreatedToday(ctx, userID)
+	if err != nil {
+		s.Logger.Error("failed to count user urls today", "user_id", userID, "error", err)
+		return
+	}
+
+	remaining := dailyURLQuota - int(todayCount)
+	if remaining <= 0 {
+		s.Logger.Info("user at daily quota, skipping anonymous url transfer", "user_id", userID, "today_count", todayCount)
+		return
+	}
+
+	// Transfer only up to remaining quota
+	err = s.ShortURLRepo.TransferAnonymousURLsToUserWithLimit(ctx, db.TransferAnonymousURLsToUserWithLimitParams{
+		OwnerID:   anonID,
+		OwnerID_2: userID,
+		Limit:     int32(remaining),
+	})
+	if err != nil {
+		s.Logger.Error("failed to transfer anonymous urls", "anon_id", anonID, "user_id", userID, "error", err)
+		return
+	}
+
+	s.Logger.Info("transferred anonymous urls with quota limit", "anon_id", anonID, "user_id", userID, "max_transferred", remaining)
+}
+
 func hashToken(token string) string {
 	hash := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(hash[:])
