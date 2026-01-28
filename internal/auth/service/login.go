@@ -16,6 +16,7 @@ func (s *AuthSvcImp) Login(ctx context.Context, input LoginInput) (AuthOutput, e
 	user, err := s.Repo.GetUserByEmail(ctx, email)
 	if err != nil {
 		if err == pgx.ErrNoRows {
+			s.Logger.Info("login attempt for non-existent user", "email", email)
 			return AuthOutput{}, ErrInvalidCredentials
 		}
 		s.Logger.Error("failed to get user", "email", email, "error", err)
@@ -23,6 +24,7 @@ func (s *AuthSvcImp) Login(ctx context.Context, input LoginInput) (AuthOutput, e
 	}
 
 	if !hash.CheckPassword(input.Password, user.PasswordHash) {
+		s.Logger.Info("login attempt with wrong password", "email", email)
 		return AuthOutput{}, ErrInvalidCredentials
 	}
 

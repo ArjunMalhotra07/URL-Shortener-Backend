@@ -24,8 +24,9 @@ func NewAuthHandler(svc service.AuthService) *AuthHandler {
 }
 
 type AuthRes struct {
-	UserID string `json:"user_id"`
-	Email  string `json:"email"`
+	UserID  string `json:"user_id"`
+	Email   string `json:"email"`
+	Message string `json:"message"`
 }
 
 type ErrorRes struct {

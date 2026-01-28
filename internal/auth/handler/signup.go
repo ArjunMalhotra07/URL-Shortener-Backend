@@ -53,5 +53,6 @@ func (h *AuthHandler) Signup(c echo.Context) error {
 	return c.JSON(http.StatusCreated, AuthRes{
 		UserID: output.UserID,
 		Email:  output.Email,
+		Message: "Success Enjoy TinyCLK!",
 	})
 }
