@@ -32,6 +32,7 @@ CREATE TABLE short_urls (
   owner_type  owner_type_enum NOT NULL DEFAULT 'anonymous',
   owner_id    TEXT NOT NULL,
   is_active   BOOLEAN NOT NULL DEFAULT TRUE,
+  is_deleted  BOOLEAN NOT NULL DEFAULT FALSE,
   expires_at  TIMESTAMPTZ NULL,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()

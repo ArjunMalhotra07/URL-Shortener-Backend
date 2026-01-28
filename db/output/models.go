@@ -84,6 +84,7 @@ type ShortUrl struct {
 	OwnerType OwnerTypeEnum      `json:"owner_type"`
 	OwnerID   string             `json:"owner_id"`
 	IsActive  bool               `json:"is_active"`
+	IsDeleted bool               `json:"is_deleted"`
 	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`

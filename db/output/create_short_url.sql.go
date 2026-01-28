@@ -13,7 +13,7 @@ import (
 
 const countURLsByOwner = `-- name: CountURLsByOwner :one
 SELECT COUNT(*) FROM short_urls
-WHERE owner_type = $1 AND owner_id = $2
+WHERE owner_type = $1 AND owner_id = $2 AND is_deleted = FALSE
 `
 
 type CountURLsByOwnerParams struct {
@@ -32,6 +32,7 @@ const countURLsCreatedToday = `-- name: CountURLsCreatedToday :one
 SELECT COUNT(*) FROM short_urls
 WHERE owner_id = $1
 AND created_at >= CURRENT_DATE
+AND is_deleted = FALSE
 `
 
 func (q *Queries) CountURLsCreatedToday(ctx context.Context, ownerID string) (int64, error) {
@@ -85,9 +86,9 @@ func (q *Queries) CreateShortURL(ctx context.Context, arg CreateShortURLParams) 
 }
 
 const getShortURLByCode = `-- name: GetShortURLByCode :one
-SELECT id, code, long_url, owner_type, owner_id, is_active, expires_at, created_at, updated_at
+SELECT id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at
 FROM short_urls
-WHERE code = $1
+WHERE code = $1 AND is_deleted = FALSE
 `
 
 func (q *Queries) GetShortURLByCode(ctx context.Context, code string) (ShortUrl, error) {
@@ -100,6 +101,7 @@ func (q *Queries) GetShortURLByCode(ctx context.Context, code string) (ShortUrl,
 		&i.OwnerType,
 		&i.OwnerID,
 		&i.IsActive,
+		&i.IsDeleted,
 		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -108,9 +110,9 @@ func (q *Queries) GetShortURLByCode(ctx context.Context, code string) (ShortUrl,
 }
 
 const getShortURLsByOwner = `-- name: GetShortURLsByOwner :many
-SELECT id, code, long_url, owner_type, owner_id, is_active, expires_at, created_at, updated_at
+SELECT id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at
 FROM short_urls
-WHERE owner_type = $1 AND owner_id = $2
+WHERE owner_type = $1 AND owner_id = $2 AND is_deleted = FALSE
 ORDER BY created_at DESC
 LIMIT $3 OFFSET $4
 `
@@ -143,6 +145,7 @@ func (q *Queries) GetShortURLsByOwner(ctx context.Context, arg GetShortURLsByOwn
 			&i.OwnerType,
 			&i.OwnerID,
 			&i.IsActive,
+			&i.IsDeleted,
 			&i.ExpiresAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -155,6 +158,70 @@ func (q *Queries) GetShortURLsByOwner(ctx context.Context, arg GetShortURLsByOwn
 		return nil, err
 	}
 	return items, nil
+}
+
+const getURLByCodeAndOwner = `-- name: GetURLByCodeAndOwner :one
+SELECT id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at
+FROM short_urls
+WHERE code = $1 AND owner_type = $2 AND owner_id = $3 AND is_deleted = FALSE
+`
+
+type GetURLByCodeAndOwnerParams struct {
+	Code      string        `json:"code"`
+	OwnerType OwnerTypeEnum `json:"owner_type"`
+	OwnerID   string        `json:"owner_id"`
+}
+
+func (q *Queries) GetURLByCodeAndOwner(ctx context.Context, arg GetURLByCodeAndOwnerParams) (ShortUrl, error) {
+	row := q.db.QueryRow(ctx, getURLByCodeAndOwner, arg.Code, arg.OwnerType, arg.OwnerID)
+	var i ShortUrl
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.LongUrl,
+		&i.OwnerType,
+		&i.OwnerID,
+		&i.IsActive,
+		&i.IsDeleted,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const softDeleteURL = `-- name: SoftDeleteURL :exec
+UPDATE short_urls
+SET is_deleted = TRUE
+WHERE code = $1 AND owner_type = $2 AND owner_id = $3 AND is_deleted = FALSE
+`
+
+type SoftDeleteURLParams struct {
+	Code      string        `json:"code"`
+	OwnerType OwnerTypeEnum `json:"owner_type"`
+	OwnerID   string        `json:"owner_id"`
+}
+
+func (q *Queries) SoftDeleteURL(ctx context.Context, arg SoftDeleteURLParams) error {
+	_, err := q.db.Exec(ctx, softDeleteURL, arg.Code, arg.OwnerType, arg.OwnerID)
+	return err
+}
+
+const toggleURLActive = `-- name: ToggleURLActive :exec
+UPDATE short_urls
+SET is_active = NOT is_active
+WHERE code = $1 AND owner_type = $2 AND owner_id = $3 AND is_deleted = FALSE
+`
+
+type ToggleURLActiveParams struct {
+	Code      string        `json:"code"`
+	OwnerType OwnerTypeEnum `json:"owner_type"`
+	OwnerID   string        `json:"owner_id"`
+}
+
+func (q *Queries) ToggleURLActive(ctx context.Context, arg ToggleURLActiveParams) error {
+	_, err := q.db.Exec(ctx, toggleURLActive, arg.Code, arg.OwnerType, arg.OwnerID)
+	return err
 }
 
 const transferAnonymousURLsToUser = `-- name: TransferAnonymousURLsToUser :exec

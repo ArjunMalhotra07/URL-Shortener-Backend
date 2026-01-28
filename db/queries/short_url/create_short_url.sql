@@ -10,20 +10,35 @@ WHERE id = $1
 RETURNING id, code, long_url, owner_type, owner_id, created_at, updated_at;
 
 -- name: GetShortURLByCode :one
-SELECT id, code, long_url, owner_type, owner_id, is_active, expires_at, created_at, updated_at
+SELECT id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at
 FROM short_urls
-WHERE code = $1;
+WHERE code = $1 AND is_deleted = FALSE;
 
 -- name: GetShortURLsByOwner :many
-SELECT id, code, long_url, owner_type, owner_id, is_active, expires_at, created_at, updated_at
+SELECT id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at
 FROM short_urls
-WHERE owner_type = $1 AND owner_id = $2
+WHERE owner_type = $1 AND owner_id = $2 AND is_deleted = FALSE
 ORDER BY created_at DESC
 LIMIT $3 OFFSET $4;
 
 -- name: CountURLsByOwner :one
 SELECT COUNT(*) FROM short_urls
-WHERE owner_type = $1 AND owner_id = $2;
+WHERE owner_type = $1 AND owner_id = $2 AND is_deleted = FALSE;
+
+-- name: GetURLByCodeAndOwner :one
+SELECT id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at
+FROM short_urls
+WHERE code = $1 AND owner_type = $2 AND owner_id = $3 AND is_deleted = FALSE;
+
+-- name: ToggleURLActive :exec
+UPDATE short_urls
+SET is_active = NOT is_active
+WHERE code = $1 AND owner_type = $2 AND owner_id = $3 AND is_deleted = FALSE;
+
+-- name: SoftDeleteURL :exec
+UPDATE short_urls
+SET is_deleted = TRUE
+WHERE code = $1 AND owner_type = $2 AND owner_id = $3 AND is_deleted = FALSE;
 
 -- name: TransferAnonymousURLsToUser :exec
 UPDATE short_urls
@@ -33,4 +48,5 @@ WHERE owner_type = 'anonymous' AND owner_id = $1;
 -- name: CountURLsCreatedToday :one
 SELECT COUNT(*) FROM short_urls
 WHERE owner_id = $1
-AND created_at >= CURRENT_DATE;
+AND created_at >= CURRENT_DATE
+AND is_deleted = FALSE;

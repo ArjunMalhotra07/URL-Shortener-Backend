@@ -33,7 +33,7 @@ func NewEchoServer(svcs *internal.AppServices, jwtMgr *jwt.JWTManager) *EchoServ
 			"http://localhost:5173",
 			"http://192.168.1.3:5173",
 		},
-		AllowMethods:  []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodOptions},
+		AllowMethods:  []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete, http.MethodOptions},
 		ExposeHeaders: []string{"Set-Cookie"},
 	}))
 
@@ -69,5 +69,7 @@ func (s *EchoServer) setupRoutes() {
 	// Short URL routes
 	apiV1.POST("/shorten", s.svcs.ShortURL.CreateShortURL)
 	apiV1.GET("/my-urls", s.svcs.ShortURL.GetMyURLs)
+	apiV1.PATCH("/urls/:code/toggle", s.svcs.ShortURL.ToggleURLActive)
+	apiV1.DELETE("/urls/:code", s.svcs.ShortURL.DeleteURL)
 	apiV1.GET("/:code", s.svcs.ShortURL.GetOriginalURL)
 }
