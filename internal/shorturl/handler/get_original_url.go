@@ -12,7 +12,7 @@ import (
 func (h *ShortURLHandler) GetOriginalURL(c echo.Context) error {
 	code := c.Param("code")
 	if code == "" {
-		return c.JSON(http.StatusBadRequest, ErrorRes{Error: "code is required"})
+		return c.Redirect(http.StatusFound, h.FrontendURL+"/error?type=invalid")
 	}
 
 	output, err := h.Svc.GetLongURL(c.Request().Context(), service.GetLongURLInput{
@@ -21,15 +21,15 @@ func (h *ShortURLHandler) GetOriginalURL(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrInvalidCode):
-			return c.JSON(http.StatusBadRequest, ErrorRes{Error: err.Error()})
+			return c.Redirect(http.StatusFound, h.FrontendURL+"/error?type=invalid")
 		case errors.Is(err, service.ErrURLNotFound):
-			return c.JSON(http.StatusNotFound, ErrorRes{Error: err.Error()})
+			return c.Redirect(http.StatusFound, h.FrontendURL+"/error?type=not_found")
 		case errors.Is(err, service.ErrURLExpired):
-			return c.JSON(http.StatusGone, ErrorRes{Error: err.Error()})
+			return c.Redirect(http.StatusFound, h.FrontendURL+"/error?type=expired")
 		case errors.Is(err, service.ErrURLInactive):
-			return c.JSON(http.StatusGone, ErrorRes{Error: err.Error()})
+			return c.Redirect(http.StatusFound, h.FrontendURL+"/error?type=inactive")
 		default:
-			return c.JSON(http.StatusInternalServerError, ErrorRes{Error: "internal server error"})
+			return c.Redirect(http.StatusFound, h.FrontendURL+"/error?type=default")
 		}
 	}
 

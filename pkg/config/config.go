@@ -19,9 +19,12 @@ type Config struct {
 	DBMaxConnIdleTimeSeconds int32 `env:"DB_MAX_CONN_IDLE_TIME_SECONDS" envDefault:"300"`
 
 	// JWT settings
-	JWTSecret                  string `env:"JWT_SECRET" envDefault:""`
-	JWTAccessTokenExpiryMins   int    `env:"JWT_ACCESS_TOKEN_EXPIRY_MINS" envDefault:"60"`
-	JWTRefreshTokenExpiryDays  int    `env:"JWT_REFRESH_TOKEN_EXPIRY_DAYS" envDefault:"30"`
+	JWTSecret                 string `env:"JWT_SECRET" envDefault:""`
+	JWTAccessTokenExpiryMins  int    `env:"JWT_ACCESS_TOKEN_EXPIRY_MINS" envDefault:"60"`
+	JWTRefreshTokenExpiryDays int    `env:"JWT_REFRESH_TOKEN_EXPIRY_DAYS" envDefault:"30"`
+
+	// Frontend URL for redirects
+	FrontendURL string `env:"FRONTEND_URL" envDefault:"http://localhost:5173"`
 }
 
 func LoadConfig() (Config, error) {

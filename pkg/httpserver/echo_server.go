@@ -71,5 +71,7 @@ func (s *EchoServer) setupRoutes() {
 	apiV1.GET("/my-urls", s.svcs.ShortURL.GetMyURLs)
 	apiV1.PATCH("/urls/:code/toggle", s.svcs.ShortURL.ToggleURLActive)
 	apiV1.DELETE("/urls/:code", s.svcs.ShortURL.DeleteURL)
-	apiV1.GET("/:code", s.svcs.ShortURL.GetOriginalURL)
+
+	// Redirect route at root level: example.com/:code
+	s.e.GET("/:code", s.svcs.ShortURL.GetOriginalURL)
 }
