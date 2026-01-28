@@ -14,6 +14,9 @@ type ShortURLRepository interface {
 	TransferAnonymousURLsToUser(ctx context.Context, params db.TransferAnonymousURLsToUserParams) error
 	CountURLsCreatedToday(ctx context.Context, ownerID string) (int64, error)
 	CountURLsByOwner(ctx context.Context, params db.CountURLsByOwnerParams) (int64, error)
+	GetURLByCodeAndOwner(ctx context.Context, params db.GetURLByCodeAndOwnerParams) (db.ShortUrl, error)
+	ToggleURLActive(ctx context.Context, params db.ToggleURLActiveParams) error
+	SoftDeleteURL(ctx context.Context, params db.SoftDeleteURLParams) error
 }
 
 type ShortURLRepoImp struct {
@@ -56,4 +59,16 @@ func (r *ShortURLRepoImp) CountURLsCreatedToday(ctx context.Context, ownerID str
 
 func (r *ShortURLRepoImp) CountURLsByOwner(ctx context.Context, params db.CountURLsByOwnerParams) (int64, error) {
 	return r.Queries.CountURLsByOwner(ctx, params)
+}
+
+func (r *ShortURLRepoImp) GetURLByCodeAndOwner(ctx context.Context, params db.GetURLByCodeAndOwnerParams) (db.ShortUrl, error) {
+	return r.Queries.GetURLByCodeAndOwner(ctx, params)
+}
+
+func (r *ShortURLRepoImp) ToggleURLActive(ctx context.Context, params db.ToggleURLActiveParams) error {
+	return r.Queries.ToggleURLActive(ctx, params)
+}
+
+func (r *ShortURLRepoImp) SoftDeleteURL(ctx context.Context, params db.SoftDeleteURLParams) error {
+	return r.Queries.SoftDeleteURL(ctx, params)
 }

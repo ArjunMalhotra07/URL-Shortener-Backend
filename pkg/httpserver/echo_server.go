@@ -5,20 +5,24 @@ import (
 	"net/http"
 
 	"url_shortner_backend/internal"
+	authmw "url_shortner_backend/pkg/middleware"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+
+	"url_shortner_backend/pkg/jwt"
 )
 
 type EchoServer struct {
 	e    *echo.Echo
 	svcs *internal.AppServices
+	jwt  *jwt.JWTManager
 }
 
 func (s *EchoServer) Start(addr string) error            { return s.e.Start(addr) }
 func (s *EchoServer) Shutdown(ctx context.Context) error { return s.e.Shutdown(ctx) }
 
-func NewEchoServer(svcs *internal.AppServices) *EchoServer {
+func NewEchoServer(svcs *internal.AppServices, jwtMgr *jwt.JWTManager) *EchoServer {
 	e := echo.New()
 
 	// CORS middleware - allow credentials (cookies) from frontend
@@ -29,13 +33,17 @@ func NewEchoServer(svcs *internal.AppServices) *EchoServer {
 			"http://localhost:5173",
 			"http://192.168.1.3:5173",
 		},
-		AllowMethods:  []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodOptions},
+		AllowMethods:  []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete, http.MethodOptions},
 		ExposeHeaders: []string{"Set-Cookie"},
 	}))
+
+	// Auth middleware - extracts user from JWT (does not block)
+	e.Use(authmw.AuthMiddleware(jwtMgr))
 
 	server := &EchoServer{
 		e:    e,
 		svcs: svcs,
+		jwt:  jwtMgr,
 	}
 
 	server.setupRoutes()
@@ -50,8 +58,18 @@ func (s *EchoServer) setupRoutes() {
 		})
 	})
 
+	// Auth routes
+	auth := apiV1.Group("/auth")
+	auth.POST("/signup", s.svcs.Auth.Signup)
+	auth.POST("/login", s.svcs.Auth.Login)
+	auth.POST("/refresh", s.svcs.Auth.Refresh)
+	auth.POST("/logout", s.svcs.Auth.Logout)
+	auth.GET("/me", s.svcs.Auth.Me, authmw.RequireAuth())
+
 	// Short URL routes
 	apiV1.POST("/shorten", s.svcs.ShortURL.CreateShortURL)
 	apiV1.GET("/my-urls", s.svcs.ShortURL.GetMyURLs)
+	apiV1.PATCH("/urls/:code/toggle", s.svcs.ShortURL.ToggleURLActive)
+	apiV1.DELETE("/urls/:code", s.svcs.ShortURL.DeleteURL)
 	apiV1.GET("/:code", s.svcs.ShortURL.GetOriginalURL)
 }
