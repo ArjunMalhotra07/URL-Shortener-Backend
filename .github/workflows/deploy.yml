@@ -2,6 +2,11 @@ name: Deploy to EC2
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.0)'
+        required: false
+        default: ''
 
 env:
   REGISTRY: ghcr.io
@@ -35,6 +40,7 @@ jobs:
           tags: |
             type=sha,prefix=
             type=raw,value=latest
+            type=raw,value=${{ inputs.version }},enable=${{ inputs.version != '' }}
 
       - name: Build and push
         uses: docker/build-push-action@v5
@@ -56,7 +62,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            echo "${{ secrets.GH_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             docker stop url-shortener-api || true
             docker rm url-shortener-api || true
