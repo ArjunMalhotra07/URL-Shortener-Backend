@@ -13,7 +13,7 @@ type ShortURLRepository interface {
 	GetShortURLsByOwner(ctx context.Context, params db.GetShortURLsByOwnerParams) ([]db.ShortUrl, error)
 	TransferAnonymousURLsToUser(ctx context.Context, params db.TransferAnonymousURLsToUserParams) error
 	TransferAnonymousURLsToUserWithLimit(ctx context.Context, params db.TransferAnonymousURLsToUserWithLimitParams) error
-	CountURLsCreatedToday(ctx context.Context, ownerID string) (int64, error)
+	CountURLsCreatedThisMonth(ctx context.Context, ownerID string) (int64, error)
 	CountURLsByOwner(ctx context.Context, params db.CountURLsByOwnerParams) (int64, error)
 	GetURLByCodeAndOwner(ctx context.Context, params db.GetURLByCodeAndOwnerParams) (db.ShortUrl, error)
 	ToggleURLActive(ctx context.Context, params db.ToggleURLActiveParams) error
@@ -58,8 +58,8 @@ func (r *ShortURLRepoImp) TransferAnonymousURLsToUserWithLimit(ctx context.Conte
 	return r.Queries.TransferAnonymousURLsToUserWithLimit(ctx, params)
 }
 
-func (r *ShortURLRepoImp) CountURLsCreatedToday(ctx context.Context, ownerID string) (int64, error) {
-	return r.Queries.CountURLsCreatedToday(ctx, ownerID)
+func (r *ShortURLRepoImp) CountURLsCreatedThisMonth(ctx context.Context, ownerID string) (int64, error) {
+	return r.Queries.CountURLsCreatedThisMonth(ctx, ownerID)
 }
 
 func (r *ShortURLRepoImp) CountURLsByOwner(ctx context.Context, params db.CountURLsByOwnerParams) (int64, error) {

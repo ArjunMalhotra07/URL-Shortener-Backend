@@ -26,8 +26,9 @@ type Config struct {
 	// Frontend URL for redirects
 	FrontendURL string `env:"FRONTEND_URL" envDefault:"http://localhost:5173"`
 
-	// URL Quotas
-	DailyURLQuota int `env:"DAILY_URL_QUOTA" envDefault:"5"`
+	// URL Quotas (monthly)
+	MonthlyQuotaAnonymous int `env:"MONTHLY_QUOTA_ANONYMOUS" envDefault:"50"`
+	MonthlyQuotaUser      int `env:"MONTHLY_QUOTA_USER" envDefault:"100"`
 }
 
 func LoadConfig() (Config, error) {

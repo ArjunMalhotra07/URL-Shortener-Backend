@@ -28,15 +28,15 @@ func (q *Queries) CountURLsByOwner(ctx context.Context, arg CountURLsByOwnerPara
 	return count, err
 }
 
-const countURLsCreatedToday = `-- name: CountURLsCreatedToday :one
+const countURLsCreatedThisMonth = `-- name: CountURLsCreatedThisMonth :one
 SELECT COUNT(*) FROM short_urls
 WHERE owner_id = $1
-AND created_at >= CURRENT_DATE
+AND created_at >= date_trunc('month', CURRENT_TIMESTAMP)
 AND is_deleted = FALSE
 `
 
-func (q *Queries) CountURLsCreatedToday(ctx context.Context, ownerID string) (int64, error) {
-	row := q.db.QueryRow(ctx, countURLsCreatedToday, ownerID)
+func (q *Queries) CountURLsCreatedThisMonth(ctx context.Context, ownerID string) (int64, error) {
+	row := q.db.QueryRow(ctx, countURLsCreatedThisMonth, ownerID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err

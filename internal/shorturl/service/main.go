@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"url_shortner_backend/internal/shorturl/repo"
+	"url_shortner_backend/pkg/config"
 	"url_shortner_backend/pkg/logger"
 )
 
@@ -21,16 +22,16 @@ type ShortURLSvc interface {
 }
 
 type ShortURLSvcImp struct {
-	Logger        logger.Logger
-	Repo          repo.ShortURLRepository
-	DailyURLQuota int
+	Logger logger.Logger
+	Repo   repo.ShortURLRepository
+	Cfg    *config.Config
 }
 
-func NewShortURLSvcImp(Repo repo.ShortURLRepository, Logger logger.Logger, dailyURLQuota int) *ShortURLSvcImp {
+func NewShortURLSvcImp(Repo repo.ShortURLRepository, Logger logger.Logger, cfg *config.Config) *ShortURLSvcImp {
 	return &ShortURLSvcImp{
-		Repo:          Repo,
-		Logger:        Logger,
-		DailyURLQuota: dailyURLQuota,
+		Repo:   Repo,
+		Logger: Logger,
+		Cfg:    cfg,
 	}
 }
 
@@ -41,12 +42,14 @@ func normalizeURL(rawURL string) string {
 	return rawURL
 }
 
-const base62Chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+const (
+	base62Chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	// Offset to ensure minimum 3-character codes (62^2 = 3844)
+	base62Offset = 3844
+)
 
 func encodeBase62(num int64) string {
-	if num == 0 {
-		return string(base62Chars[0])
-	}
+	num += base62Offset // Ensures 3+ character codes
 
 	var encoded []byte
 	for num > 0 {

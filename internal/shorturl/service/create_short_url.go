@@ -28,15 +28,22 @@ func (s *ShortURLSvcImp) CreateShortURL(ctx context.Context, input CreateShortUR
 		return CreateShortURLOutput{}, ErrInvalidURL
 	}
 
-	// Check daily quota
-	todayCount, err := s.Repo.CountURLsCreatedToday(ctx, input.OwnerID)
+	// Check monthly quota
+	monthCount, err := s.Repo.CountURLsCreatedThisMonth(ctx, input.OwnerID)
 	if err != nil {
-		s.Logger.Error("failed to count today's urls", "owner_id", input.OwnerID, "error", err)
+		s.Logger.Error("failed to count this month's urls", "owner_id", input.OwnerID, "error", err)
 		return CreateShortURLOutput{}, ErrURLCreation
 	}
-	if int(todayCount) >= s.DailyURLQuota {
-		s.Logger.Info("daily quota exceeded", "owner_id", input.OwnerID, "count", todayCount)
-		return CreateShortURLOutput{}, ErrDailyQuotaExceeded
+
+	// Get quota based on owner type
+	quota := s.Cfg.MonthlyQuotaAnonymous
+	if input.OwnerType == "user" {
+		quota = s.Cfg.MonthlyQuotaUser
+	}
+
+	if int(monthCount) >= quota {
+		s.Logger.Info("monthly quota exceeded", "owner_id", input.OwnerID, "owner_type", input.OwnerType, "count", monthCount, "quota", quota)
+		return CreateShortURLOutput{}, ErrMonthlyQuotaExceeded
 	}
 
 	ownerType := db.OwnerTypeEnumAnonymous

@@ -55,8 +55,8 @@ WHERE id IN (
     LIMIT $3
 );
 
--- name: CountURLsCreatedToday :one
+-- name: CountURLsCreatedThisMonth :one
 SELECT COUNT(*) FROM short_urls
 WHERE owner_id = $1
-AND created_at >= CURRENT_DATE
+AND created_at >= date_trunc('month', CURRENT_TIMESTAMP)
 AND is_deleted = FALSE;

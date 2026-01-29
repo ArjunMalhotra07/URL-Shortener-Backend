@@ -12,6 +12,7 @@ import (
 	db "url_shortner_backend/db/output"
 	"url_shortner_backend/internal/auth/repo"
 	shorturlrepo "url_shortner_backend/internal/shorturl/repo"
+	"url_shortner_backend/pkg/config"
 	"url_shortner_backend/pkg/jwt"
 	"url_shortner_backend/pkg/logger"
 )
@@ -25,20 +26,20 @@ type AuthService interface {
 }
 
 type AuthSvcImp struct {
-	Repo          repo.AuthRepository
-	ShortURLRepo  shorturlrepo.ShortURLRepository
-	JWT           *jwt.JWTManager
-	Logger        logger.Logger
-	DailyURLQuota int
+	Repo         repo.AuthRepository
+	ShortURLRepo shorturlrepo.ShortURLRepository
+	JWT          *jwt.JWTManager
+	Logger       logger.Logger
+	Cfg          *config.Config
 }
 
-func NewAuthSvcImp(r repo.AuthRepository, shortURLRepo shorturlrepo.ShortURLRepository, jwtMgr *jwt.JWTManager, l logger.Logger, dailyURLQuota int) *AuthSvcImp {
+func NewAuthSvcImp(r repo.AuthRepository, shortURLRepo shorturlrepo.ShortURLRepository, jwtMgr *jwt.JWTManager, l logger.Logger, cfg *config.Config) *AuthSvcImp {
 	return &AuthSvcImp{
-		Repo:          r,
-		ShortURLRepo:  shortURLRepo,
-		JWT:           jwtMgr,
-		Logger:        l,
-		DailyURLQuota: dailyURLQuota,
+		Repo:         r,
+		ShortURLRepo: shortURLRepo,
+		JWT:          jwtMgr,
+		Logger:       l,
+		Cfg:          cfg,
 	}
 }
 
@@ -99,19 +100,19 @@ func (s *AuthSvcImp) generateTokens(ctx context.Context, userID, email string) (
 	}, nil
 }
 
-// transferAnonymousURLsWithQuota transfers anonymous URLs to user, respecting daily quota.
-// Only transfers up to (quota - existing_today) URLs. Excess URLs are not transferred.
+// transferAnonymousURLsWithQuota transfers anonymous URLs to user, respecting monthly quota.
+// Only transfers up to (quota - existing_this_month) URLs. Excess URLs are not transferred.
 func (s *AuthSvcImp) transferAnonymousURLsWithQuota(ctx context.Context, anonID, userID string) {
-	// Count how many URLs user has already created today
-	todayCount, err := s.ShortURLRepo.CountURLsCreatedToday(ctx, userID)
+	// Count how many URLs user has already created this month
+	monthCount, err := s.ShortURLRepo.CountURLsCreatedThisMonth(ctx, userID)
 	if err != nil {
-		s.Logger.Error("failed to count user urls today", "user_id", userID, "error", err)
+		s.Logger.Error("failed to count user urls this month", "user_id", userID, "error", err)
 		return
 	}
 
-	remaining := s.DailyURLQuota - int(todayCount)
+	remaining := s.Cfg.MonthlyQuotaUser - int(monthCount)
 	if remaining <= 0 {
-		s.Logger.Info("user at daily quota, skipping anonymous url transfer", "user_id", userID, "today_count", todayCount)
+		s.Logger.Info("user at monthly quota, skipping anonymous url transfer", "user_id", userID, "month_count", monthCount)
 		return
 	}
 

@@ -13,7 +13,7 @@ var (
 	ErrURLInactive   = errors.New("short url is inactive")
 	ErrURLFetch           = errors.New("failed to fetch urls")
 	ErrURLTransfer        = errors.New("failed to transfer urls")
-	ErrDailyQuotaExceeded = errors.New("daily url creation limit exceeded")
+	ErrMonthlyQuotaExceeded = errors.New("monthly url creation limit exceeded")
 	ErrURLNotOwned        = errors.New("url not owned by user")
 	ErrURLToggle          = errors.New("failed to toggle url")
 	ErrURLDelete          = errors.New("failed to delete url")
