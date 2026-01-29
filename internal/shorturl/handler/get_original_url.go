@@ -33,5 +33,5 @@ func (h *ShortURLHandler) GetOriginalURL(c echo.Context) error {
 		}
 	}
 
-	return c.Redirect(http.StatusMovedPermanently, output.LongURL)
+	return c.Redirect(http.StatusFound, output.LongURL)
 }
