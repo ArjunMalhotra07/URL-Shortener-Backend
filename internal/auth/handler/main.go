@@ -2,12 +2,17 @@ package handler
 
 import (
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/labstack/echo/v4"
 
 	"url_shortner_backend/internal/auth/service"
 )
+
+func isProd() bool {
+	return os.Getenv("APP_ENV") != "dev"
+}
 
 const (
 	AccessTokenCookie  = "access_token"
@@ -34,36 +39,50 @@ type ErrorRes struct {
 }
 
 func setAuthCookies(c echo.Context, output service.AuthOutput) {
+	sameSite := http.SameSiteLaxMode
+	secure := false
+	if isProd() {
+		sameSite = http.SameSiteNoneMode
+		secure = true
+	}
+
 	c.SetCookie(&http.Cookie{
 		Name:     AccessTokenCookie,
 		Value:    output.AccessToken,
 		Path:     "/",
 		Expires:  output.AccessExpiresAt,
 		HttpOnly: true,
-		Secure:   false, // Set to true in production with HTTPS
-		SameSite: http.SameSiteLaxMode,
+		Secure:   secure,
+		SameSite: sameSite,
 	})
 
 	c.SetCookie(&http.Cookie{
 		Name:     RefreshTokenCookie,
 		Value:    output.RefreshToken,
-		Path:     "/api/v1/auth", // Only sent to auth endpoints
+		Path:     "/api/v1/auth",
 		Expires:  output.RefreshExpiresAt,
 		HttpOnly: true,
-		Secure:   false, // Set to true in production with HTTPS
-		SameSite: http.SameSiteLaxMode,
+		Secure:   secure,
+		SameSite: sameSite,
 	})
 }
 
 func clearAuthCookies(c echo.Context) {
+	sameSite := http.SameSiteLaxMode
+	secure := false
+	if isProd() {
+		sameSite = http.SameSiteNoneMode
+		secure = true
+	}
+
 	c.SetCookie(&http.Cookie{
 		Name:     AccessTokenCookie,
 		Value:    "",
 		Path:     "/",
 		Expires:  time.Unix(0, 0),
 		HttpOnly: true,
-		Secure:   false,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   secure,
+		SameSite: sameSite,
 	})
 
 	c.SetCookie(&http.Cookie{
@@ -72,20 +91,27 @@ func clearAuthCookies(c echo.Context) {
 		Path:     "/api/v1/auth",
 		Expires:  time.Unix(0, 0),
 		HttpOnly: true,
-		Secure:   false,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   secure,
+		SameSite: sameSite,
 	})
 }
 
 func clearAnonCookie(c echo.Context) {
+	sameSite := http.SameSiteLaxMode
+	secure := false
+	if isProd() {
+		sameSite = http.SameSiteNoneMode
+		secure = true
+	}
+
 	c.SetCookie(&http.Cookie{
 		Name:     AnonIDCookie,
 		Value:    "",
 		Path:     "/",
 		Expires:  time.Unix(0, 0),
 		HttpOnly: true,
-		Secure:   false,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   secure,
+		SameSite: sameSite,
 	})
 }
 

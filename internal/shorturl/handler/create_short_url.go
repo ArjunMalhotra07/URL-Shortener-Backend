@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -13,6 +14,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
+
+func isProd() bool {
+	return os.Getenv("APP_ENV") != "dev"
+}
 
 const (
 	AnonIDCookieName   = "anon_id"
@@ -119,13 +124,20 @@ func parseAnonCookie(value string) (string, time.Time, bool) {
 func setAnonCookie(c echo.Context, anonID string) {
 	cookieValue := fmt.Sprintf("%s_%d", anonID, time.Now().Unix())
 
+	sameSite := http.SameSiteLaxMode
+	secure := false
+	if isProd() {
+		sameSite = http.SameSiteNoneMode
+		secure = true
+	}
+
 	c.SetCookie(&http.Cookie{
 		Name:     AnonIDCookieName,
 		Value:    cookieValue,
 		Path:     "/",
 		MaxAge:   CookieMaxAge,
 		HttpOnly: true,
-		Secure:   false, // Set to true in production with HTTPS
-		SameSite: http.SameSiteLaxMode,
+		Secure:   secure,
+		SameSite: sameSite,
 	})
 }
