@@ -17,6 +17,7 @@ jobs:
     environment: prod
     permissions:
       contents: read
+      actions: write
     outputs:
       sha_tag: ${{ steps.vars.outputs.sha_tag }}
     steps:
