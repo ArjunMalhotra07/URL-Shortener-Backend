@@ -42,6 +42,8 @@ func (h *AuthHandler) Signup(c echo.Context) error {
 		switch {
 		case errors.Is(err, service.ErrEmailExists):
 			return c.JSON(http.StatusConflict, ErrorRes{Error: "email already exists"})
+		case errors.Is(err, service.ErrEmailExistsWithGoogle):
+			return c.JSON(http.StatusConflict, ErrorRes{Error: "this email uses Google Sign-In. Please login with Google."})
 		default:
 			return c.JSON(http.StatusInternalServerError, ErrorRes{Error: "failed to create account"})
 		}

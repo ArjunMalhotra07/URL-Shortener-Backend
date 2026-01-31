@@ -11,6 +11,45 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createGoogleUser = `-- name: CreateGoogleUser :one
+INSERT INTO users (email, password_hash, login_type, google_id, name, avatar_url)
+VALUES ($1, '', 1, $2, $3, $4)
+RETURNING id, email, name, avatar_url, created_at
+`
+
+type CreateGoogleUserParams struct {
+	Email     string      `json:"email"`
+	GoogleID  pgtype.Text `json:"google_id"`
+	Name      pgtype.Text `json:"name"`
+	AvatarUrl pgtype.Text `json:"avatar_url"`
+}
+
+type CreateGoogleUserRow struct {
+	ID        pgtype.UUID        `json:"id"`
+	Email     string             `json:"email"`
+	Name      pgtype.Text        `json:"name"`
+	AvatarUrl pgtype.Text        `json:"avatar_url"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+func (q *Queries) CreateGoogleUser(ctx context.Context, arg CreateGoogleUserParams) (CreateGoogleUserRow, error) {
+	row := q.db.QueryRow(ctx, createGoogleUser,
+		arg.Email,
+		arg.GoogleID,
+		arg.Name,
+		arg.AvatarUrl,
+	)
+	var i CreateGoogleUserRow
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Name,
+		&i.AvatarUrl,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const createRefreshToken = `-- name: CreateRefreshToken :one
 INSERT INTO refresh_tokens (user_id, token_hash, expires_at)
 VALUES ($1, $2, $3)
@@ -49,8 +88,8 @@ RETURNING id, email, created_at
 `
 
 type CreateUserParams struct {
-	Email        string `json:"email"`
-	PasswordHash string `json:"password_hash"`
+	Email        string      `json:"email"`
+	PasswordHash pgtype.Text `json:"password_hash"`
 }
 
 type CreateUserRow struct {
@@ -116,18 +155,67 @@ func (q *Queries) GetRefreshToken(ctx context.Context, tokenHash string) (Refres
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, password_hash, created_at, updated_at
+SELECT id, email, password_hash, login_type, google_id, name, avatar_url, created_at, updated_at
 FROM users
 WHERE email = $1
 `
 
-func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+type GetUserByEmailRow struct {
+	ID           pgtype.UUID        `json:"id"`
+	Email        string             `json:"email"`
+	PasswordHash pgtype.Text        `json:"password_hash"`
+	LoginType    int16              `json:"login_type"`
+	GoogleID     pgtype.Text        `json:"google_id"`
+	Name         pgtype.Text        `json:"name"`
+	AvatarUrl    pgtype.Text        `json:"avatar_url"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error) {
 	row := q.db.QueryRow(ctx, getUserByEmail, email)
-	var i User
+	var i GetUserByEmailRow
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
 		&i.PasswordHash,
+		&i.LoginType,
+		&i.GoogleID,
+		&i.Name,
+		&i.AvatarUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserByGoogleID = `-- name: GetUserByGoogleID :one
+SELECT id, email, login_type, google_id, name, avatar_url, created_at, updated_at
+FROM users
+WHERE google_id = $1
+`
+
+type GetUserByGoogleIDRow struct {
+	ID        pgtype.UUID        `json:"id"`
+	Email     string             `json:"email"`
+	LoginType int16              `json:"login_type"`
+	GoogleID  pgtype.Text        `json:"google_id"`
+	Name      pgtype.Text        `json:"name"`
+	AvatarUrl pgtype.Text        `json:"avatar_url"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetUserByGoogleID(ctx context.Context, googleID pgtype.Text) (GetUserByGoogleIDRow, error) {
+	row := q.db.QueryRow(ctx, getUserByGoogleID, googleID)
+	var i GetUserByGoogleIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.LoginType,
+		&i.GoogleID,
+		&i.Name,
+		&i.AvatarUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -135,7 +223,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, email, created_at, updated_at
+SELECT id, email, login_type, name, avatar_url, created_at, updated_at
 FROM users
 WHERE id = $1
 `
@@ -143,6 +231,9 @@ WHERE id = $1
 type GetUserByIDRow struct {
 	ID        pgtype.UUID        `json:"id"`
 	Email     string             `json:"email"`
+	LoginType int16              `json:"login_type"`
+	Name      pgtype.Text        `json:"name"`
+	AvatarUrl pgtype.Text        `json:"avatar_url"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
@@ -153,6 +244,9 @@ func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (GetUserByIDR
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
+		&i.LoginType,
+		&i.Name,
+		&i.AvatarUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

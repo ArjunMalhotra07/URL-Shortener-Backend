@@ -20,6 +20,7 @@ import (
 type AuthService interface {
 	Signup(ctx context.Context, input SignupInput) (AuthOutput, error)
 	Login(ctx context.Context, input LoginInput) (AuthOutput, error)
+	GoogleLogin(ctx context.Context, input GoogleLoginInput) (AuthOutput, error)
 	Refresh(ctx context.Context, refreshToken string) (AuthOutput, error)
 	Logout(ctx context.Context, refreshToken string) error
 	LogoutAll(ctx context.Context, userID string) error
@@ -53,6 +54,14 @@ type LoginInput struct {
 	Email    string
 	Password string
 	AnonID   string
+}
+
+type GoogleLoginInput struct {
+	GoogleID  string
+	Email     string
+	Name      string
+	AvatarURL string
+	AnonID    string
 }
 
 type AuthOutput struct {

@@ -93,7 +93,12 @@ type ShortUrl struct {
 type User struct {
 	ID           pgtype.UUID        `json:"id"`
 	Email        string             `json:"email"`
-	PasswordHash string             `json:"password_hash"`
+	PasswordHash pgtype.Text        `json:"password_hash"`
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	// 0 = email/password, 1 = google
+	LoginType int16       `json:"login_type"`
+	GoogleID  pgtype.Text `json:"google_id"`
+	Name      pgtype.Text `json:"name"`
+	AvatarUrl pgtype.Text `json:"avatar_url"`
 }

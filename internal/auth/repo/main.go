@@ -10,7 +10,9 @@ import (
 
 type AuthRepository interface {
 	CreateUser(ctx context.Context, params db.CreateUserParams) (db.CreateUserRow, error)
-	GetUserByEmail(ctx context.Context, email string) (db.User, error)
+	CreateGoogleUser(ctx context.Context, params db.CreateGoogleUserParams) (db.CreateGoogleUserRow, error)
+	GetUserByEmail(ctx context.Context, email string) (db.GetUserByEmailRow, error)
+	GetUserByGoogleID(ctx context.Context, googleID pgtype.Text) (db.GetUserByGoogleIDRow, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (db.GetUserByIDRow, error)
 	CreateRefreshToken(ctx context.Context, params db.CreateRefreshTokenParams) (db.CreateRefreshTokenRow, error)
 	GetRefreshToken(ctx context.Context, tokenHash string) (db.RefreshToken, error)
@@ -36,8 +38,16 @@ func (r *AuthRepoImp) CreateUser(ctx context.Context, params db.CreateUserParams
 	return r.Queries.CreateUser(ctx, params)
 }
 
-func (r *AuthRepoImp) GetUserByEmail(ctx context.Context, email string) (db.User, error) {
+func (r *AuthRepoImp) CreateGoogleUser(ctx context.Context, params db.CreateGoogleUserParams) (db.CreateGoogleUserRow, error) {
+	return r.Queries.CreateGoogleUser(ctx, params)
+}
+
+func (r *AuthRepoImp) GetUserByEmail(ctx context.Context, email string) (db.GetUserByEmailRow, error) {
 	return r.Queries.GetUserByEmail(ctx, email)
+}
+
+func (r *AuthRepoImp) GetUserByGoogleID(ctx context.Context, googleID pgtype.Text) (db.GetUserByGoogleIDRow, error) {
+	return r.Queries.GetUserByGoogleID(ctx, googleID)
 }
 
 func (r *AuthRepoImp) GetUserByID(ctx context.Context, id pgtype.UUID) (db.GetUserByIDRow, error) {
