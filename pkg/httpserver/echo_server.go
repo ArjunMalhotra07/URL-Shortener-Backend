@@ -36,7 +36,7 @@ func NewEchoServer(svcs *internal.AppServices, jwtMgr *jwt.JWTManager) *EchoServ
 			"http://192.168.1.3:5173",
 			"https://tinyclk.com",
 			"http://tinyclk.com",
-			"https://d2d633dbmcnciv.cloudfront.net",
+			"https://superethical-dorotha-sobriquetical.ngrok-free.dev",
 		},
 		AllowMethods:  []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete, http.MethodOptions},
 		ExposeHeaders: []string{"Set-Cookie"},
@@ -86,6 +86,7 @@ func (s *EchoServer) setupRoutes() {
 	auth := apiV1.Group("/auth", authRateLimiter)
 	auth.POST("/signup", s.svcs.Auth.Signup)
 	auth.POST("/login", s.svcs.Auth.Login)
+	auth.POST("/google", s.svcs.Auth.GoogleLogin)
 	auth.POST("/refresh", s.svcs.Auth.Refresh)
 	auth.POST("/logout", s.svcs.Auth.Logout)
 	auth.GET("/me", s.svcs.Auth.Me, authmw.RequireAuth())

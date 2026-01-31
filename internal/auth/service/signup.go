@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	db "url_shortner_backend/db/output"
 	"url_shortner_backend/pkg/hash"
@@ -14,8 +15,11 @@ func (s *AuthSvcImp) Signup(ctx context.Context, input SignupInput) (AuthOutput,
 	email := strings.ToLower(strings.TrimSpace(input.Email))
 
 	// Check if user already exists
-	_, err := s.Repo.GetUserByEmail(ctx, email)
+	existingUser, err := s.Repo.GetUserByEmail(ctx, email)
 	if err == nil {
+		if existingUser.LoginType == 1 {
+			return AuthOutput{}, ErrEmailExistsWithGoogle
+		}
 		return AuthOutput{}, ErrEmailExists
 	}
 	if err != pgx.ErrNoRows {
@@ -33,7 +37,7 @@ func (s *AuthSvcImp) Signup(ctx context.Context, input SignupInput) (AuthOutput,
 	// Create user
 	user, err := s.Repo.CreateUser(ctx, db.CreateUserParams{
 		Email:        email,
-		PasswordHash: passwordHash,
+		PasswordHash: pgtype.Text{String: passwordHash, Valid: true},
 	})
 	if err != nil {
 		s.Logger.Error("failed to create user", "email", email, "error", err)

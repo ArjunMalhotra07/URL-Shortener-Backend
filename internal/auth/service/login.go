@@ -22,7 +22,13 @@ func (s *AuthSvcImp) Login(ctx context.Context, input LoginInput) (AuthOutput, e
 		return AuthOutput{}, ErrInvalidCredentials
 	}
 
-	if !hash.CheckPassword(input.Password, user.PasswordHash) {
+	// Check if user signed up with Google
+	if user.LoginType == 1 {
+		s.Logger.Info("password login attempt for google user", "email", email)
+		return AuthOutput{}, ErrEmailExistsWithGoogle
+	}
+
+	if !hash.CheckPassword(input.Password, user.PasswordHash.String) {
 		s.Logger.Info("login attempt with wrong password", "email", email)
 		return AuthOutput{}, ErrInvalidCredentials
 	}
