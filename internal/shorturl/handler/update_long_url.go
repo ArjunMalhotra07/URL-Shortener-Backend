@@ -33,6 +33,9 @@ func (h *ShortURLHandler) UpdateLongURL(c echo.Context) error {
 	if userID := c.Get("user_id"); userID != nil && userID != "" {
 		ownerType = "user"
 		ownerID = userID.(string)
+	} else if c.Get("auth_expired") == true {
+		// User had a token but it expired - return 401 so frontend can refresh
+		return c.JSON(http.StatusUnauthorized, ErrorRes{Error: "token expired"})
 	} else {
 		// Check for anon_id cookie
 		cookie, err := c.Cookie(AnonIDCookieName)

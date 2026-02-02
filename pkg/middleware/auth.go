@@ -25,8 +25,9 @@ func AuthMiddleware(jwtMgr *jwt.JWTManager) echo.MiddlewareFunc {
 
 			claims, err := jwtMgr.ValidateAccessToken(cookie.Value)
 			if err != nil {
-				// Invalid/expired token, continue as unauthenticated
-				// Frontend should call /refresh if needed
+				// Token exists but is invalid/expired - signal this to handlers
+				// so they can return 401 instead of falling back to anonymous
+				c.Set("auth_expired", true)
 				return next(c)
 			}
 
