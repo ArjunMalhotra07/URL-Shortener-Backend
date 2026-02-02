@@ -36,7 +36,6 @@ func NewEchoServer(svcs *internal.AppServices, jwtMgr *jwt.JWTManager) *EchoServ
 			"http://192.168.1.3:5173",
 			"https://tinyclk.com",
 			"http://tinyclk.com",
-			"https://superethical-dorotha-sobriquetical.ngrok-free.dev",
 		},
 		AllowMethods:  []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete, http.MethodOptions},
 		ExposeHeaders: []string{"Set-Cookie"},

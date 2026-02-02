@@ -48,7 +48,7 @@ func (s *AuthSvcImp) Signup(ctx context.Context, input SignupInput) (AuthOutput,
 
 	// Transfer anonymous URLs if anonID provided (with quota limit)
 	if input.AnonID != "" {
-		s.transferAnonymousURLsWithQuota(ctx, input.AnonID, userID)
+		s.ShortURLSvc.TransferAnonymousURLsWithQuota(ctx, input.AnonID, userID)
 	}
 
 	return s.generateTokens(ctx, userID, email)

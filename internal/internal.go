@@ -33,7 +33,7 @@ func GetAppServices(p AppServicesParams) *AppServices {
 
 	// Auth
 	authRepo := authrepo.NewAuthRepoImp(authrepo.AuthRepoParams{Queries: p.Queries})
-	authSvc := authservice.NewAuthSvcImp(authRepo, shortURLRepo, p.JWT, p.Logger, p.Cfg)
+	authSvc := authservice.NewAuthSvcImp(authRepo, shortURLSvc, p.JWT, p.Logger)
 	authHandler := authhandler.NewAuthHandler(authSvc)
 
 	return &AppServices{
