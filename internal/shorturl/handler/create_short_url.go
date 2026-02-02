@@ -26,15 +26,17 @@ const (
 )
 
 type CreateShortURLReq struct {
-	LongURL string `json:"long_url"`
+	LongURL   string  `json:"long_url"`
+	ExpiresAt *string `json:"expires_at,omitempty"`
 }
 
 type CreateShortURLRes struct {
-	Code      string `json:"code"`
-	LongURL   string `json:"long_url"`
-	OwnerType string `json:"owner_type"`
-	IsActive  bool   `json:"is_active"`
-	CreatedAt string `json:"created_at"`
+	Code      string  `json:"code"`
+	LongURL   string  `json:"long_url"`
+	OwnerType string  `json:"owner_type"`
+	IsActive  bool    `json:"is_active"`
+	ExpiresAt *string `json:"expires_at,omitempty"`
+	CreatedAt string  `json:"created_at"`
 }
 
 type ErrorRes struct {
@@ -53,9 +55,20 @@ func (h *ShortURLHandler) CreateShortURL(c echo.Context) error {
 
 	// Check if user is authenticated
 	var ownerType, ownerID string
+	var expiresAt *time.Time
 	if userID := c.Get("user_id"); userID != nil && userID != "" {
 		ownerType = "user"
 		ownerID = userID.(string)
+		if req.ExpiresAt != nil {
+			parsed, err := time.Parse(time.RFC3339, *req.ExpiresAt)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, ErrorRes{Error: "invalid expires_at format, use RFC3339"})
+			}
+			if parsed.Before(time.Now()) {
+				return c.JSON(http.StatusBadRequest, ErrorRes{Error: "expires_at must be in the future"})
+			}
+			expiresAt = &parsed
+		}
 	} else {
 		// Fall back to anonymous
 		ownerType = "anonymous"
@@ -66,6 +79,7 @@ func (h *ShortURLHandler) CreateShortURL(c echo.Context) error {
 		LongURL:   req.LongURL,
 		OwnerType: ownerType,
 		OwnerID:   ownerID,
+		ExpiresAt: expiresAt,
 	})
 	if err != nil {
 		switch {
@@ -80,11 +94,18 @@ func (h *ShortURLHandler) CreateShortURL(c echo.Context) error {
 		}
 	}
 
+	var expiresAtStr *string
+	if output.ExpiresAt != nil {
+		formatted := output.ExpiresAt.UTC().Format(time.RFC3339)
+		expiresAtStr = &formatted
+	}
+
 	return c.JSON(http.StatusCreated, CreateShortURLRes{
 		Code:      output.Code,
 		LongURL:   output.LongURL,
 		OwnerType: output.OwnerType,
 		IsActive:  output.IsActive,
+		ExpiresAt: expiresAtStr,
 		CreatedAt: output.CreatedAt.UTC().Format(time.RFC3339),
 	})
 }

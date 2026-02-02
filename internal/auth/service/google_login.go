@@ -17,7 +17,7 @@ func (s *AuthSvcImp) GoogleLogin(ctx context.Context, input GoogleLoginInput) (A
 	if err == nil {
 		userID := uuidToString(user.ID)
 		if input.AnonID != "" {
-			s.transferAnonymousURLsWithQuota(ctx, input.AnonID, userID)
+			s.ShortURLSvc.TransferAnonymousURLsWithQuota(ctx, input.AnonID, userID)
 		}
 		s.Logger.Info("google user logged in", "email", email, "user_id", userID)
 		return s.generateTokens(ctx, userID, email)
@@ -57,7 +57,7 @@ func (s *AuthSvcImp) GoogleLogin(ctx context.Context, input GoogleLoginInput) (A
 	userID := uuidToString(newUser.ID)
 
 	if input.AnonID != "" {
-		s.transferAnonymousURLsWithQuota(ctx, input.AnonID, userID)
+		s.ShortURLSvc.TransferAnonymousURLsWithQuota(ctx, input.AnonID, userID)
 	}
 
 	s.Logger.Info("google user created and logged in", "email", email, "user_id", userID)

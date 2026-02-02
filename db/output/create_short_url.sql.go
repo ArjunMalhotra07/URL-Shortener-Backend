@@ -43,16 +43,17 @@ func (q *Queries) CountURLsCreatedThisMonth(ctx context.Context, ownerID string)
 }
 
 const createShortURL = `-- name: CreateShortURL :one
-INSERT INTO short_urls (code, long_url, owner_type, owner_id)
-VALUES ($1, $2, $3, $4)
-RETURNING id, code, long_url, owner_type, owner_id, created_at, updated_at
+INSERT INTO short_urls (code, long_url, owner_type, owner_id, expires_at)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, code, long_url, owner_type, owner_id, expires_at, created_at, updated_at
 `
 
 type CreateShortURLParams struct {
-	Code      string        `json:"code"`
-	LongUrl   string        `json:"long_url"`
-	OwnerType OwnerTypeEnum `json:"owner_type"`
-	OwnerID   string        `json:"owner_id"`
+	Code      string             `json:"code"`
+	LongUrl   string             `json:"long_url"`
+	OwnerType OwnerTypeEnum      `json:"owner_type"`
+	OwnerID   string             `json:"owner_id"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
 }
 
 type CreateShortURLRow struct {
@@ -61,6 +62,7 @@ type CreateShortURLRow struct {
 	LongUrl   string             `json:"long_url"`
 	OwnerType OwnerTypeEnum      `json:"owner_type"`
 	OwnerID   string             `json:"owner_id"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
@@ -71,6 +73,7 @@ func (q *Queries) CreateShortURL(ctx context.Context, arg CreateShortURLParams) 
 		arg.LongUrl,
 		arg.OwnerType,
 		arg.OwnerID,
+		arg.ExpiresAt,
 	)
 	var i CreateShortURLRow
 	err := row.Scan(
@@ -79,6 +82,7 @@ func (q *Queries) CreateShortURL(ctx context.Context, arg CreateShortURLParams) 
 		&i.LongUrl,
 		&i.OwnerType,
 		&i.OwnerID,
+		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -226,7 +230,7 @@ func (q *Queries) ToggleURLActive(ctx context.Context, arg ToggleURLActiveParams
 
 const transferAnonymousURLsToUser = `-- name: TransferAnonymousURLsToUser :exec
 UPDATE short_urls
-SET owner_type = 'user', owner_id = $2
+SET owner_type = 'user', owner_id = $2, expires_at = NULL
 WHERE owner_type = 'anonymous' AND owner_id = $1
 `
 
@@ -242,7 +246,7 @@ func (q *Queries) TransferAnonymousURLsToUser(ctx context.Context, arg TransferA
 
 const transferAnonymousURLsToUserWithLimit = `-- name: TransferAnonymousURLsToUserWithLimit :exec
 UPDATE short_urls
-SET owner_type = 'user', owner_id = $2
+SET owner_type = 'user', owner_id = $2, expires_at = NULL
 WHERE id IN (
     SELECT s.id FROM short_urls s
     WHERE s.owner_type = 'anonymous' AND s.owner_id = $1 AND s.is_deleted = FALSE
@@ -289,7 +293,7 @@ const updateShortURLCode = `-- name: UpdateShortURLCode :one
 UPDATE short_urls
 SET code = $2
 WHERE id = $1
-RETURNING id, code, long_url, owner_type, owner_id, created_at, updated_at
+RETURNING id, code, long_url, owner_type, owner_id, expires_at, created_at, updated_at
 `
 
 type UpdateShortURLCodeParams struct {
@@ -303,6 +307,7 @@ type UpdateShortURLCodeRow struct {
 	LongUrl   string             `json:"long_url"`
 	OwnerType OwnerTypeEnum      `json:"owner_type"`
 	OwnerID   string             `json:"owner_id"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
@@ -316,6 +321,7 @@ func (q *Queries) UpdateShortURLCode(ctx context.Context, arg UpdateShortURLCode
 		&i.LongUrl,
 		&i.OwnerType,
 		&i.OwnerID,
+		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

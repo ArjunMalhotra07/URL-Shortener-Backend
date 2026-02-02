@@ -12,10 +12,12 @@ import (
 )
 
 type URLItem struct {
-	Code      string `json:"code"`
-	LongURL   string `json:"long_url"`
-	IsActive  bool   `json:"is_active"`
-	CreatedAt string `json:"created_at"`
+	Code      string  `json:"code"`
+	LongURL   string  `json:"long_url"`
+	IsActive  bool    `json:"is_active"`
+	ExpiresAt *string `json:"expires_at,omitempty"`
+	IsExpired bool    `json:"is_expired"`
+	CreatedAt string  `json:"created_at"`
 }
 
 type GetMyURLsRes struct {
@@ -70,10 +72,17 @@ func (h *ShortURLHandler) GetMyURLs(c echo.Context) error {
 
 	urls := make([]URLItem, len(output.URLs))
 	for i, u := range output.URLs {
+		var expiresAt *string
+		if u.ExpiresAt != nil {
+			formatted := u.ExpiresAt.UTC().Format(time.RFC3339)
+			expiresAt = &formatted
+		}
 		urls[i] = URLItem{
 			Code:      u.Code,
 			LongURL:   u.LongURL,
 			IsActive:  u.IsActive,
+			ExpiresAt: expiresAt,
+			IsExpired: u.IsExpired,
 			CreatedAt: u.CreatedAt.UTC().Format(time.RFC3339),
 		}
 	}

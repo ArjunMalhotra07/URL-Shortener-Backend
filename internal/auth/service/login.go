@@ -37,7 +37,7 @@ func (s *AuthSvcImp) Login(ctx context.Context, input LoginInput) (AuthOutput, e
 
 	// Transfer anonymous URLs if anonID provided (with quota limit)
 	if input.AnonID != "" {
-		s.transferAnonymousURLsWithQuota(ctx, input.AnonID, userID)
+		s.ShortURLSvc.TransferAnonymousURLsWithQuota(ctx, input.AnonID, userID)
 	}
 
 	s.Logger.Info("user logged in successfully", "email", email, "user_id", userID)

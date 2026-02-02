@@ -11,8 +11,7 @@ import (
 
 	db "url_shortner_backend/db/output"
 	"url_shortner_backend/internal/auth/repo"
-	shorturlrepo "url_shortner_backend/internal/shorturl/repo"
-	"url_shortner_backend/pkg/config"
+	shorturlsvc "url_shortner_backend/internal/shorturl/service"
 	"url_shortner_backend/pkg/jwt"
 	"url_shortner_backend/pkg/logger"
 )
@@ -27,20 +26,18 @@ type AuthService interface {
 }
 
 type AuthSvcImp struct {
-	Repo         repo.AuthRepository
-	ShortURLRepo shorturlrepo.ShortURLRepository
-	JWT          *jwt.JWTManager
-	Logger       logger.Logger
-	Cfg          *config.Config
+	Repo        repo.AuthRepository
+	ShortURLSvc shorturlsvc.ShortURLSvc
+	JWT         *jwt.JWTManager
+	Logger      logger.Logger
 }
 
-func NewAuthSvcImp(r repo.AuthRepository, shortURLRepo shorturlrepo.ShortURLRepository, jwtMgr *jwt.JWTManager, l logger.Logger, cfg *config.Config) *AuthSvcImp {
+func NewAuthSvcImp(r repo.AuthRepository, shortURLSvc shorturlsvc.ShortURLSvc, jwtMgr *jwt.JWTManager, l logger.Logger) *AuthSvcImp {
 	return &AuthSvcImp{
-		Repo:         r,
-		ShortURLRepo: shortURLRepo,
-		JWT:          jwtMgr,
-		Logger:       l,
-		Cfg:          cfg,
+		Repo:        r,
+		ShortURLSvc: shortURLSvc,
+		JWT:         jwtMgr,
+		Logger:      l,
 	}
 }
 
@@ -107,36 +104,6 @@ func (s *AuthSvcImp) generateTokens(ctx context.Context, userID, email string) (
 		RefreshToken:     refreshToken,
 		RefreshExpiresAt: refreshExpiresAt,
 	}, nil
-}
-
-// transferAnonymousURLsWithQuota transfers anonymous URLs to user, respecting monthly quota.
-// Only transfers up to (quota - existing_this_month) URLs. Excess URLs are not transferred.
-func (s *AuthSvcImp) transferAnonymousURLsWithQuota(ctx context.Context, anonID, userID string) {
-	// Count how many URLs user has already created this month
-	monthCount, err := s.ShortURLRepo.CountURLsCreatedThisMonth(ctx, userID)
-	if err != nil {
-		s.Logger.Error("failed to count user urls this month", "user_id", userID, "error", err)
-		return
-	}
-
-	remaining := s.Cfg.MonthlyQuotaUser - int(monthCount)
-	if remaining <= 0 {
-		s.Logger.Info("user at monthly quota, skipping anonymous url transfer", "user_id", userID, "month_count", monthCount)
-		return
-	}
-
-	// Transfer only up to remaining quota
-	err = s.ShortURLRepo.TransferAnonymousURLsToUserWithLimit(ctx, db.TransferAnonymousURLsToUserWithLimitParams{
-		OwnerID:   anonID,
-		OwnerID_2: userID,
-		Limit:     int32(remaining),
-	})
-	if err != nil {
-		s.Logger.Error("failed to transfer anonymous urls", "anon_id", anonID, "user_id", userID, "error", err)
-		return
-	}
-
-	s.Logger.Info("transferred anonymous urls with quota limit", "anon_id", anonID, "user_id", userID, "max_transferred", remaining)
 }
 
 func hashToken(token string) string {
