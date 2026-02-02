@@ -95,6 +95,7 @@ func (s *EchoServer) setupRoutes() {
 	apiV1.POST("/shorten", s.svcs.ShortURL.CreateShortURL)
 	apiV1.GET("/my-urls", s.svcs.ShortURL.GetMyURLs)
 	apiV1.PATCH("/urls/:code/toggle", s.svcs.ShortURL.ToggleURLActive)
+	apiV1.PATCH("/urls/:code", s.svcs.ShortURL.UpdateLongURL)
 	apiV1.DELETE("/urls/:code", s.svcs.ShortURL.DeleteURL)
 
 	// Redirect route at root level: example.com/:code (no rate limit for fast redirects)
