@@ -2,8 +2,6 @@ package service
 
 import (
 	"context"
-	"net/url"
-	"strings"
 
 	"github.com/jackc/pgx/v5"
 
@@ -25,19 +23,9 @@ func (s *ShortURLSvcImp) UpdateLongURL(ctx context.Context, input UpdateLongURLI
 		return ErrInvalidOwner
 	}
 
-	// Validate and normalize the new long URL
-	longURL := strings.TrimSpace(input.LongURL)
-	if longURL == "" {
-		return ErrInvalidURL
-	}
-
-	// Add https:// if no scheme provided
-	if !strings.HasPrefix(longURL, "http://") && !strings.HasPrefix(longURL, "https://") {
-		longURL = "https://" + longURL
-	}
-
-	parsedURL, err := url.ParseRequestURI(longURL)
-	if err != nil || (parsedURL.Scheme != "http" && parsedURL.Scheme != "https") {
+	longURL := normalizeURL(input.LongURL)
+	if err := validateURL(longURL); err != nil {
+		s.Logger.Error("invalid url provided", "url", longURL, "error", err)
 		return ErrInvalidURL
 	}
 
@@ -47,7 +35,7 @@ func (s *ShortURLSvcImp) UpdateLongURL(ctx context.Context, input UpdateLongURLI
 	}
 
 	// Verify ownership
-	_, err = s.Repo.GetURLByCodeAndOwner(ctx, db.GetURLByCodeAndOwnerParams{
+	_, err := s.Repo.GetURLByCodeAndOwner(ctx, db.GetURLByCodeAndOwnerParams{
 		Code:      input.Code,
 		OwnerType: ownerType,
 		OwnerID:   input.OwnerID,
