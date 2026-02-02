@@ -17,4 +17,5 @@ var (
 	ErrURLNotOwned        = errors.New("url not owned by user")
 	ErrURLToggle          = errors.New("failed to toggle url")
 	ErrURLDelete          = errors.New("failed to delete url")
+	ErrURLUpdate          = errors.New("failed to update url")
 )

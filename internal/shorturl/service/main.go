@@ -19,6 +19,7 @@ type ShortURLSvc interface {
 	TransferURLsToUser(ctx context.Context, input TransferURLsInput) error
 	ToggleURLActive(ctx context.Context, input ToggleURLInput) error
 	DeleteURL(ctx context.Context, input DeleteURLInput) error
+	UpdateLongURL(ctx context.Context, input UpdateLongURLInput) error
 }
 
 type ShortURLSvcImp struct {
