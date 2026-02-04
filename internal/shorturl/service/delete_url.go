@@ -52,6 +52,9 @@ func (s *ShortURLSvcImp) DeleteURL(ctx context.Context, input DeleteURLInput) er
 		return ErrURLDelete
 	}
 
+	// Invalidate cache
+	s.InvalidateURLCache(ctx, input.Code)
+
 	s.Logger.Info("url deleted", "code", input.Code, "owner_id", input.OwnerID)
 	return nil
 }

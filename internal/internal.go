@@ -39,7 +39,7 @@ type AppServicesParams struct {
 func GetAppServices(p AppServicesParams) *AppServices {
 	// Short URL
 	shortURLRepo := repo.NewShortURLRepoImp(repo.ShortURLRepoParams{Queries: p.Queries})
-	shortURLSvc := service.NewShortURLSvcImp(shortURLRepo, p.Logger, p.Cfg)
+	shortURLSvc := service.NewShortURLSvcImp(shortURLRepo, p.Logger, p.Cfg, p.Redis)
 	shortURLHandler := handler.NewShortURLHandler(shortURLSvc, p.Cfg.FrontendURL)
 
 	// Auth

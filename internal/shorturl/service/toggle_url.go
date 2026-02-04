@@ -52,6 +52,9 @@ func (s *ShortURLSvcImp) ToggleURLActive(ctx context.Context, input ToggleURLInp
 		return ErrURLToggle
 	}
 
+	// Invalidate cache
+	s.InvalidateURLCache(ctx, input.Code)
+
 	s.Logger.Info("url toggled", "code", input.Code, "owner_id", input.OwnerID)
 	return nil
 }
