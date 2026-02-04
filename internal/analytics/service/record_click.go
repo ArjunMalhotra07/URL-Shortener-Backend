@@ -15,6 +15,16 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type RecordClickInput struct {
+	ShortURLID  int64
+	IPAddress   string
+	UserAgent   string
+	Referrer    string
+	UTMSource   string
+	UTMMedium   string
+	UTMCampaign string
+}
+
 func (s *AnalyticsSvcImp) RecordClick(ctx context.Context, input RecordClickInput) error {
 	// Parse user agent
 	parsedUA := useragent.Parse(input.UserAgent)
