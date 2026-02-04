@@ -4,3 +4,4 @@
 ./tmp
 ./tmp/main
 random/*
+data/geoip/*.mmdb

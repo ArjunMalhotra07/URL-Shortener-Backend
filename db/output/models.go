@@ -69,6 +69,26 @@ func AllOwnerTypeEnumValues() []OwnerTypeEnum {
 	}
 }
 
+type Click struct {
+	ID             int64              `json:"id"`
+	ShortUrlID     int64              `json:"short_url_id"`
+	ClickedAt      pgtype.Timestamptz `json:"clicked_at"`
+	IpHash         string             `json:"ip_hash"`
+	Country        pgtype.Text        `json:"country"`
+	City           pgtype.Text        `json:"city"`
+	Region         pgtype.Text        `json:"region"`
+	Browser        pgtype.Text        `json:"browser"`
+	Os             pgtype.Text        `json:"os"`
+	DeviceType     pgtype.Text        `json:"device_type"`
+	Referrer       pgtype.Text        `json:"referrer"`
+	ReferrerDomain pgtype.Text        `json:"referrer_domain"`
+	UtmSource      pgtype.Text        `json:"utm_source"`
+	UtmMedium      pgtype.Text        `json:"utm_medium"`
+	UtmCampaign    pgtype.Text        `json:"utm_campaign"`
+	IsUnique       pgtype.Bool        `json:"is_unique"`
+	IsBot          pgtype.Bool        `json:"is_bot"`
+}
+
 type RefreshToken struct {
 	ID        pgtype.UUID        `json:"id"`
 	UserID    pgtype.UUID        `json:"user_id"`

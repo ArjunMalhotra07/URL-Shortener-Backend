@@ -9,6 +9,7 @@ type GetLongURLInput struct {
 	Code string
 }
 type GetLongURLOutput struct {
+	ID      int64
 	LongURL string
 }
 
@@ -39,6 +40,7 @@ func (s *ShortURLSvcImp) GetLongURL(ctx context.Context, input GetLongURLInput) 
 	s.Logger.Info("long url retrieved", "code", input.Code)
 
 	return GetLongURLOutput{
+		ID:      shortURL.ID,
 		LongURL: shortURL.LongUrl,
 	}, nil
 }

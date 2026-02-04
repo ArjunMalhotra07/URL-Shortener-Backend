@@ -2,6 +2,9 @@ package internal
 
 import (
 	db "url_shortner_backend/db/output"
+	analyticshandler "url_shortner_backend/internal/analytics/handler"
+	analyticsrepo "url_shortner_backend/internal/analytics/repo"
+	analyticsservice "url_shortner_backend/internal/analytics/service"
 	authhandler "url_shortner_backend/internal/auth/handler"
 	authrepo "url_shortner_backend/internal/auth/repo"
 	authservice "url_shortner_backend/internal/auth/service"
@@ -9,20 +12,28 @@ import (
 	"url_shortner_backend/internal/shorturl/repo"
 	"url_shortner_backend/internal/shorturl/service"
 	"url_shortner_backend/pkg/config"
+	"url_shortner_backend/pkg/geoip"
 	"url_shortner_backend/pkg/jwt"
 	"url_shortner_backend/pkg/logger"
+	"url_shortner_backend/pkg/redis"
 )
 
 type AppServices struct {
-	ShortURL handler.ShortURLHandler
-	Auth     authhandler.AuthHandler
+	ShortURL  handler.ShortURLHandler
+	Auth      authhandler.AuthHandler
+	Analytics analyticshandler.AnalyticsHandler
 }
+
+// AnalyticsSvc exposes the analytics service for use in redirect recording
+type AnalyticsSvc = analyticsservice.AnalyticsSvc
 
 type AppServicesParams struct {
 	Queries *db.Queries
 	Logger  logger.Logger
 	JWT     *jwt.JWTManager
 	Cfg     *config.Config
+	Redis   *redis.RedisClient
+	GeoIP   geoip.GeoIPLookup
 }
 
 func GetAppServices(p AppServicesParams) *AppServices {
@@ -36,8 +47,23 @@ func GetAppServices(p AppServicesParams) *AppServices {
 	authSvc := authservice.NewAuthSvcImp(authRepo, shortURLSvc, p.JWT, p.Logger)
 	authHandler := authhandler.NewAuthHandler(authSvc)
 
+	// Analytics
+	analyticsRepo := analyticsrepo.NewAnalyticsRepoImp(analyticsrepo.AnalyticsRepoParams{Queries: p.Queries})
+	analyticsSvc := analyticsservice.NewAnalyticsSvcImp(analyticsservice.AnalyticsSvcParams{
+		Logger:       p.Logger,
+		Repo:         analyticsRepo,
+		ShortURLRepo: shortURLRepo,
+		GeoIP:        p.GeoIP,
+		Redis:        p.Redis,
+	})
+	analyticsHandler := analyticshandler.NewAnalyticsHandler(analyticsSvc)
+
+	// Set analytics service on shortURL handler for click recording
+	shortURLHandler.AnalyticsSvc = analyticsSvc
+
 	return &AppServices{
-		ShortURL: *shortURLHandler,
-		Auth:     *authHandler,
+		ShortURL:  *shortURLHandler,
+		Auth:      *authHandler,
+		Analytics: *analyticsHandler,
 	}
 }
