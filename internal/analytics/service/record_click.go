@@ -28,8 +28,8 @@ type RecordClickInput struct {
 func (s *AnalyticsSvcImp) RecordClick(ctx context.Context, input RecordClickInput) error {
 	// Parse user agent
 	parsedUA := useragent.Parse(input.UserAgent)
-	ipAddress := "8.8.8.8"
-	// ipAddress := input.IPAddress
+	// ipAddress := "8.8.8.8"
+	ipAddress := input.IPAddress
 	// Lookup geo info
 	var country, city, region string
 	if s.GeoIP != nil && ipAddress != "" {
