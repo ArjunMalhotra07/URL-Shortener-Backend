@@ -10,12 +10,10 @@ import (
 )
 
 type GetSummaryRes struct {
-	TotalClicks  int64                     `json:"total_clicks"`
-	UniqueClicks int64                     `json:"unique_clicks"`
-	BotClicks    int64                     `json:"bot_clicks"`
-	TopCountries []service.CountryStats    `json:"top_countries"`
-	TopReferrers []service.ReferrerStats   `json:"top_referrers"`
-	DeviceStats  []service.DeviceTypeStats `json:"device_stats"`
+	TotalClicks  int64                   `json:"total_clicks"`
+	UniqueClicks int64                   `json:"unique_clicks"`
+	BotClicks    int64                   `json:"bot_clicks"`
+	TopReferrers []service.ReferrerStats `json:"top_referrers"`
 }
 
 func (h *AnalyticsHandler) GetSummary(c echo.Context) error {
@@ -48,9 +46,7 @@ func (h *AnalyticsHandler) GetSummary(c echo.Context) error {
 		TotalClicks:  output.TotalClicks,
 		UniqueClicks: output.UniqueClicks,
 		BotClicks:    output.BotClicks,
-		TopCountries: output.TopCountries,
 		TopReferrers: output.TopReferrers,
-		DeviceStats:  output.DeviceStats,
 	})
 }
 

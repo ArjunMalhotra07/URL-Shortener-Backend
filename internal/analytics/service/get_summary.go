@@ -17,12 +17,10 @@ type GetSummaryInput struct {
 }
 
 type GetSummaryOutput struct {
-	TotalClicks  int64             `json:"total_clicks"`
-	UniqueClicks int64             `json:"unique_clicks"`
-	BotClicks    int64             `json:"bot_clicks"`
-	TopCountries []CountryStats    `json:"top_countries"`
-	TopReferrers []ReferrerStats   `json:"top_referrers"`
-	DeviceStats  []DeviceTypeStats `json:"device_stats"`
+	TotalClicks  int64           `json:"total_clicks"`
+	UniqueClicks int64           `json:"unique_clicks"`
+	BotClicks    int64           `json:"bot_clicks"`
+	TopReferrers []ReferrerStats `json:"top_referrers"`
 }
 
 type ReferrerStats struct {
@@ -63,34 +61,13 @@ func (s *AnalyticsSvcImp) GetSummary(ctx context.Context, input GetSummaryInput)
 		}
 	}
 
-	// Get top countries
+	// Get top referrers
 	clickedAtParam := pgtype.Timestamptz{Valid: true}
 	if !since.IsZero() {
 		clickedAtParam.Time = since
 	} else {
 		clickedAtParam.Time = time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
 	}
-
-	countries, err := s.Repo.GetClicksByCountry(ctx, db.GetClicksByCountryParams{
-		ShortUrlID: shortURL.ID,
-		ClickedAt:  clickedAtParam,
-		Limit:      5,
-	})
-	if err != nil {
-		s.Logger.Error("failed to get countries", "error", err)
-	}
-
-	topCountries := make([]CountryStats, 0, len(countries))
-	for _, c := range countries {
-		if c.Country.Valid {
-			topCountries = append(topCountries, CountryStats{
-				Country: c.Country.String,
-				Clicks:  c.Clicks,
-			})
-		}
-	}
-
-	// Get top referrers
 	referrers, err := s.Repo.GetTopReferrers(ctx, db.GetTopReferrersParams{
 		ShortUrlID: shortURL.ID,
 		ClickedAt:  clickedAtParam,
@@ -110,31 +87,10 @@ func (s *AnalyticsSvcImp) GetSummary(ctx context.Context, input GetSummaryInput)
 		}
 	}
 
-	// Get device stats
-	devices, err := s.Repo.GetClicksByDevice(ctx, db.GetClicksByDeviceParams{
-		ShortUrlID: shortURL.ID,
-		ClickedAt:  clickedAtParam,
-	})
-	if err != nil {
-		s.Logger.Error("failed to get devices", "error", err)
-	}
-
-	deviceStats := make([]DeviceTypeStats, 0, len(devices))
-	for _, d := range devices {
-		if d.DeviceType.Valid {
-			deviceStats = append(deviceStats, DeviceTypeStats{
-				DeviceType: d.DeviceType.String,
-				Clicks:     d.Clicks,
-			})
-		}
-	}
-
 	return GetSummaryOutput{
 		TotalClicks:  summary.TotalClicks,
 		UniqueClicks: summary.UniqueClicks,
 		BotClicks:    summary.BotClicks,
-		TopCountries: topCountries,
 		TopReferrers: topReferrers,
-		DeviceStats:  deviceStats,
 	}, nil
 }

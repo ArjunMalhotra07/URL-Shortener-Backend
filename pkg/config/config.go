@@ -37,6 +37,9 @@ type Config struct {
 
 	// GeoIP settings
 	GeoIPDBPath string `env:"GEOIP_DB_PATH" envDefault:"./data/geoip/GeoLite2-City.mmdb"`
+
+	// Debug/Testing
+	UseDummyAnalytics bool `env:"USE_DUMMY_ANALYTICS" envDefault:"false"`
 }
 
 func LoadConfig() (Config, error) {

@@ -48,7 +48,13 @@ func GetAppServices(p AppServicesParams) *AppServices {
 	authHandler := authhandler.NewAuthHandler(authSvc)
 
 	// Analytics
-	analyticsRepo := analyticsrepo.NewAnalyticsRepoImp(analyticsrepo.AnalyticsRepoParams{Queries: p.Queries})
+	// Toggle: Use dummy repo for frontend testing (set USE_DUMMY_ANALYTICS=true)
+	var analyticsRepo analyticsrepo.AnalyticsRepository
+	if p.Cfg.UseDummyAnalytics {
+		analyticsRepo = analyticsrepo.NewAnalyticsRepoDummy()
+	} else {
+		analyticsRepo = analyticsrepo.NewAnalyticsRepoImp(analyticsrepo.AnalyticsRepoParams{Queries: p.Queries})
+	}
 	analyticsSvc := analyticsservice.NewAnalyticsSvcImp(analyticsservice.AnalyticsSvcParams{
 		Logger:       p.Logger,
 		Repo:         analyticsRepo,
