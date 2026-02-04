@@ -42,6 +42,7 @@ jobs:
         run: |
           docker run -d \
             --name ${{ env.CONTAINER_NAME }} \
+            --network tinyclk \
             --restart unless-stopped \
             -p 8080:8080 \
             -v /home/ubuntu/geoip/GeoLite2-City.mmdb:/app/data/geoip/GeoLite2-City.mmdb:ro \
