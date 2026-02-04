@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	AccessTokenCookie = "access_token"
+	AccessTokenCookie  = "access_token"
+	RefreshTokenCookie = "refresh_token"
 )
 
 // AuthMiddleware extracts user info from JWT and sets it in context.
@@ -19,7 +20,11 @@ func AuthMiddleware(jwtMgr *jwt.JWTManager) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			cookie, err := c.Cookie(AccessTokenCookie)
 			if err != nil || cookie.Value == "" {
-				// No token, continue as unauthenticated
+				// No access token - check if refresh token exists
+				// If refresh token exists, user was logged in but access token expired
+				if refreshCookie, err := c.Cookie(RefreshTokenCookie); err == nil && refreshCookie.Value != "" {
+					c.Set("auth_expired", true)
+				}
 				return next(c)
 			}
 

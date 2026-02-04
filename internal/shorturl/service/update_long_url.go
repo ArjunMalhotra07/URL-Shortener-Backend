@@ -60,6 +60,9 @@ func (s *ShortURLSvcImp) UpdateLongURL(ctx context.Context, input UpdateLongURLI
 		return ErrURLUpdate
 	}
 
+	// Invalidate cache
+	s.InvalidateURLCache(ctx, input.Code)
+
 	s.Logger.Info("long url updated", "code", input.Code, "owner_id", input.OwnerID)
 	return nil
 }

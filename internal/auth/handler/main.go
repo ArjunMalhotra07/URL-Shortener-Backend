@@ -59,7 +59,7 @@ func setAuthCookies(c echo.Context, output service.AuthOutput) {
 	c.SetCookie(&http.Cookie{
 		Name:     RefreshTokenCookie,
 		Value:    output.RefreshToken,
-		Path:     "/api/v1/auth",
+		Path:     "/",
 		Expires:  output.RefreshExpiresAt,
 		HttpOnly: true,
 		Secure:   secure,
@@ -85,6 +85,17 @@ func clearAuthCookies(c echo.Context) {
 		SameSite: sameSite,
 	})
 
+	c.SetCookie(&http.Cookie{
+		Name:     RefreshTokenCookie,
+		Value:    "",
+		Path:     "/",
+		Expires:  time.Unix(0, 0),
+		HttpOnly: true,
+		Secure:   secure,
+		SameSite: sameSite,
+	})
+
+	// Also clear old path cookie (migration from /api/v1/auth to /)
 	c.SetCookie(&http.Cookie{
 		Name:     RefreshTokenCookie,
 		Value:    "",

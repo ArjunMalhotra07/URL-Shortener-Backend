@@ -11,11 +11,13 @@ import (
 	db "url_shortner_backend/db/output"
 	"url_shortner_backend/internal"
 	"url_shortner_backend/pkg/config"
+	"url_shortner_backend/pkg/geoip"
 	"url_shortner_backend/pkg/httpserver"
 	"url_shortner_backend/pkg/jwt"
 	"url_shortner_backend/pkg/logger"
 	"url_shortner_backend/pkg/migrate"
 	"url_shortner_backend/pkg/postgres"
+	"url_shortner_backend/pkg/redis"
 )
 
 func main() {
@@ -51,12 +53,46 @@ func main() {
 		RefreshTokenExpiry: time.Duration(cfg.JWTRefreshTokenExpiryDays) * 24 * time.Hour,
 	})
 
+	// Redis client (optional - analytics still works without it)
+	var redisClient *redis.RedisClient
+	if cfg.RedisAddr != "" {
+		redisClient, err = redis.NewRedisClient(redis.RedisConfig{
+			Addr:     cfg.RedisAddr,
+			Password: cfg.RedisPassword,
+			DB:       cfg.RedisDB,
+		})
+		if err != nil {
+			logr.Info("redis connection failed, analytics caching disabled", "error", err)
+		} else {
+			defer redisClient.Close()
+			logr.Info("connected to redis", "addr", cfg.RedisAddr)
+		}
+	}
+
+	// GeoIP service (optional - analytics still works without it)
+	var geoIPSvc geoip.GeoIPLookup
+	if cfg.GeoIPDBPath != "" {
+		realGeoIP, err := geoip.NewGeoIPService(cfg.GeoIPDBPath)
+		if err != nil {
+			logr.Info("GeoIP database not loaded, geo lookups disabled", "error", err, "path", cfg.GeoIPDBPath)
+			geoIPSvc = geoip.NewNullGeoIPService()
+		} else {
+			defer realGeoIP.Close()
+			geoIPSvc = realGeoIP
+			logr.Info("loaded GeoIP database", "path", cfg.GeoIPDBPath)
+		}
+	} else {
+		geoIPSvc = geoip.NewNullGeoIPService()
+	}
+
 	// Get services
 	svcs := internal.GetAppServices(internal.AppServicesParams{
 		Queries: queries,
 		Logger:  logr,
 		JWT:     jwtMgr,
 		Cfg:     &cfg,
+		Redis:   redisClient,
+		GeoIP:   geoIPSvc,
 	})
 
 	// Server

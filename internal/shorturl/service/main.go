@@ -10,6 +10,7 @@ import (
 	"url_shortner_backend/internal/shorturl/repo"
 	"url_shortner_backend/pkg/config"
 	"url_shortner_backend/pkg/logger"
+	"url_shortner_backend/pkg/redis"
 )
 
 type ShortURLSvc interface {
@@ -27,13 +28,15 @@ type ShortURLSvcImp struct {
 	Logger logger.Logger
 	Repo   repo.ShortURLRepository
 	Cfg    *config.Config
+	Redis  *redis.RedisClient
 }
 
-func NewShortURLSvcImp(Repo repo.ShortURLRepository, Logger logger.Logger, cfg *config.Config) *ShortURLSvcImp {
+func NewShortURLSvcImp(Repo repo.ShortURLRepository, Logger logger.Logger, cfg *config.Config, redisClient *redis.RedisClient) *ShortURLSvcImp {
 	return &ShortURLSvcImp{
 		Repo:   Repo,
 		Logger: Logger,
 		Cfg:    cfg,
+		Redis:  redisClient,
 	}
 }
 

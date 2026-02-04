@@ -97,6 +97,14 @@ func (s *EchoServer) setupRoutes() {
 	apiV1.PATCH("/urls/:code", s.svcs.ShortURL.UpdateLongURL)
 	apiV1.DELETE("/urls/:code", s.svcs.ShortURL.DeleteURL)
 
+	// Analytics routes (uses auth middleware for ownership check)
+	analytics := apiV1.Group("/analytics")
+	analytics.GET("/:code", s.svcs.Analytics.GetSummary)
+	analytics.GET("/:code/clicks", s.svcs.Analytics.GetClicks)
+	analytics.GET("/:code/timeseries", s.svcs.Analytics.GetTimeseries)
+	analytics.GET("/:code/geo", s.svcs.Analytics.GetGeo)
+	analytics.GET("/:code/devices", s.svcs.Analytics.GetDevices)
+
 	// Redirect route at root level: example.com/:code (no rate limit for fast redirects)
 	s.e.GET("/:code", s.svcs.ShortURL.GetOriginalURL)
 }

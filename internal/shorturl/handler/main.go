@@ -1,10 +1,14 @@
 package handler
 
-import "url_shortner_backend/internal/shorturl/service"
+import (
+	analyticsservice "url_shortner_backend/internal/analytics/service"
+	"url_shortner_backend/internal/shorturl/service"
+)
 
 type ShortURLHandler struct {
-	Svc         service.ShortURLSvc
-	FrontendURL string
+	Svc          service.ShortURLSvc
+	FrontendURL  string
+	AnalyticsSvc analyticsservice.AnalyticsSvc
 }
 
 func NewShortURLHandler(svc service.ShortURLSvc, frontendURL string) *ShortURLHandler {

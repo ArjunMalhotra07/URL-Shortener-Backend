@@ -29,6 +29,17 @@ type Config struct {
 	// URL Quotas (monthly)
 	MonthlyQuotaAnonymous int `env:"MONTHLY_QUOTA_ANONYMOUS" envDefault:"50"`
 	MonthlyQuotaUser      int `env:"MONTHLY_QUOTA_USER" envDefault:"100"`
+
+	// Redis settings
+	RedisAddr     string `env:"REDIS_ADDR" envDefault:"localhost:6379"`
+	RedisPassword string `env:"REDIS_PASSWORD" envDefault:""`
+	RedisDB       int    `env:"REDIS_DB" envDefault:"0"`
+
+	// GeoIP settings
+	GeoIPDBPath string `env:"GEOIP_DB_PATH" envDefault:"./data/geoip/GeoLite2-City.mmdb"`
+
+	// Debug/Testing
+	UseDummyAnalytics bool `env:"USE_DUMMY_ANALYTICS" envDefault:"false"`
 }
 
 func LoadConfig() (Config, error) {

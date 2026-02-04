@@ -44,6 +44,7 @@ jobs:
             --name ${{ env.CONTAINER_NAME }} \
             --restart unless-stopped \
             -p 8080:8080 \
+            -v /home/ubuntu/geoip/GeoLite2-City.mmdb:/app/data/geoip/GeoLite2-City.mmdb:ro \
             -e APP_ENV=prod \
             -e SERVER_PORT=${{ secrets.SERVER_PORT }} \
             -e DB_DSN="${{ secrets.DB_DSN }}" \
@@ -56,6 +57,10 @@ jobs:
             -e FRONTEND_URL="${{ secrets.FRONTEND_URL }}" \
             -e MONTHLY_QUOTA_ANONYMOUS=${{ secrets.MONTHLY_QUOTA_ANONYMOUS }} \
             -e MONTHLY_QUOTA_USER=${{ secrets.MONTHLY_QUOTA_USER }} \
+            -e REDIS_ADDR="${{ secrets.REDIS_ADDR }}" \
+            -e REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD }}" \
+            -e REDIS_DB="${{ secrets.REDIS_DB }}" \
+            -e GEOIP_DB_PATH=/app/data/geoip/GeoLite2-City.mmdb \
             ${{ env.IMAGE_NAME }}:${{ inputs.image_tag || 'latest' }}
 
       - name: Verify deployment
