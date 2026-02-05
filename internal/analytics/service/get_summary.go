@@ -13,7 +13,8 @@ type GetSummaryInput struct {
 	Code      string
 	OwnerType string
 	OwnerID   string
-	TimeRange string // "24h", "7d", "30d", "all"
+	Start     time.Time // zero time means all time
+	End       time.Time
 }
 
 type GetSummaryOutput struct {
@@ -35,10 +36,8 @@ func (s *AnalyticsSvcImp) GetSummary(ctx context.Context, input GetSummaryInput)
 		return GetSummaryOutput{}, err
 	}
 
-	since := parseTimeRange(input.TimeRange)
-
 	var summary db.GetClicksSummaryRow
-	if since.IsZero() {
+	if isAllTime(input.Start) {
 		// All time
 		allTimeSummary, err := s.Repo.GetClicksSummaryAllTime(ctx, shortURL.ID)
 		if err != nil {
@@ -53,7 +52,7 @@ func (s *AnalyticsSvcImp) GetSummary(ctx context.Context, input GetSummaryInput)
 	} else {
 		summary, err = s.Repo.GetClicksSummary(ctx, db.GetClicksSummaryParams{
 			ShortUrlID: shortURL.ID,
-			ClickedAt:  pgtype.Timestamptz{Time: since, Valid: true},
+			ClickedAt:  pgtype.Timestamptz{Time: input.Start, Valid: true},
 		})
 		if err != nil {
 			s.Logger.Error("failed to get summary", "error", err)
@@ -62,12 +61,7 @@ func (s *AnalyticsSvcImp) GetSummary(ctx context.Context, input GetSummaryInput)
 	}
 
 	// Get top referrers
-	clickedAtParam := pgtype.Timestamptz{Valid: true}
-	if !since.IsZero() {
-		clickedAtParam.Time = since
-	} else {
-		clickedAtParam.Time = time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
-	}
+	clickedAtParam := pgtype.Timestamptz{Time: getStartTime(input.Start), Valid: true}
 	referrers, err := s.Repo.GetTopReferrers(ctx, db.GetTopReferrersParams{
 		ShortUrlID: shortURL.ID,
 		ClickedAt:  clickedAtParam,

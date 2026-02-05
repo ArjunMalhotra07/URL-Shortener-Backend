@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"time"
+
 	db "url_shortner_backend/db/output"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -12,11 +13,13 @@ type TimeseriesPoint struct {
 	Date   time.Time `json:"date"`
 	Clicks int64     `json:"clicks"`
 }
+
 type GetTimeseriesInput struct {
 	Code      string
 	OwnerType string
 	OwnerID   string
-	TimeRange string // "24h", "7d", "30d"
+	Start     time.Time // zero time means all time
+	End       time.Time
 	Interval  string // "hour", "day"
 }
 
@@ -31,12 +34,7 @@ func (s *AnalyticsSvcImp) GetTimeseries(ctx context.Context, input GetTimeseries
 		return GetTimeseriesOutput{}, err
 	}
 
-	since := parseTimeRange(input.TimeRange)
-	if since.IsZero() {
-		since = time.Now().Add(-30 * 24 * time.Hour) // default to 30 days
-	}
-
-	clickedAtParam := pgtype.Timestamptz{Time: since, Valid: true}
+	clickedAtParam := pgtype.Timestamptz{Time: getStartTime(input.Start), Valid: true}
 
 	var data []TimeseriesPoint
 

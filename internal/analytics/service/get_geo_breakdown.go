@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"time"
+
 	db "url_shortner_backend/db/output"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -12,7 +13,8 @@ type GetGeoInput struct {
 	Code      string
 	OwnerType string
 	OwnerID   string
-	TimeRange string
+	Start     time.Time // zero time means all time
+	End       time.Time
 	Limit     int32
 }
 
@@ -34,13 +36,7 @@ func (s *AnalyticsSvcImp) GetGeoBreakdown(ctx context.Context, input GetGeoInput
 		return GetGeoOutput{}, err
 	}
 
-	since := parseTimeRange(input.TimeRange)
-	clickedAtParam := pgtype.Timestamptz{Valid: true}
-	if !since.IsZero() {
-		clickedAtParam.Time = since
-	} else {
-		clickedAtParam.Time = time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
-	}
+	clickedAtParam := pgtype.Timestamptz{Time: getStartTime(input.Start), Valid: true}
 
 	limit := input.Limit
 	if limit <= 0 || limit > 50 {

@@ -18,18 +18,18 @@ func (h *AnalyticsHandler) GetTimeseries(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorRes{Error: "code is required"})
 	}
 
-	timeRange := c.QueryParam("range")
-	if timeRange == "" {
-		timeRange = "7d"
+	timeRange, errMsg := parseTimeRangeParams(c)
+	if errMsg != "" {
+		return c.JSON(http.StatusBadRequest, ErrorRes{Error: errMsg})
 	}
 
 	interval := c.QueryParam("interval")
 	if interval == "" {
 		// Auto-select based on time range
-		switch timeRange {
-		case "24h":
+		rangeParam := c.QueryParam("range")
+		if rangeParam == "24h" {
 			interval = "hour"
-		default:
+		} else {
 			interval = "day"
 		}
 	}
@@ -43,7 +43,8 @@ func (h *AnalyticsHandler) GetTimeseries(c echo.Context) error {
 		Code:      code,
 		OwnerType: ownerType,
 		OwnerID:   ownerID,
-		TimeRange: timeRange,
+		Start:     timeRange.Start,
+		End:       timeRange.End,
 		Interval:  interval,
 	})
 	if err != nil {

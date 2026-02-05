@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"time"
+
 	db "url_shortner_backend/db/output"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -12,13 +13,16 @@ type GetDeviceInput struct {
 	Code      string
 	OwnerType string
 	OwnerID   string
-	TimeRange string
+	Start     time.Time // zero time means all time
+	End       time.Time
 }
+
 type GetDeviceOutput struct {
 	DeviceTypes []DeviceTypeStats `json:"device_types"`
 	Browsers    []BrowserStats    `json:"browsers"`
 	OS          []OSStats         `json:"os"`
 }
+
 type OSStats struct {
 	OS     string `json:"os"`
 	Clicks int64  `json:"clicks"`
@@ -36,13 +40,7 @@ func (s *AnalyticsSvcImp) GetDeviceBreakdown(ctx context.Context, input GetDevic
 		return GetDeviceOutput{}, err
 	}
 
-	since := parseTimeRange(input.TimeRange)
-	clickedAtParam := pgtype.Timestamptz{Valid: true}
-	if !since.IsZero() {
-		clickedAtParam.Time = since
-	} else {
-		clickedAtParam.Time = time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
-	}
+	clickedAtParam := pgtype.Timestamptz{Time: getStartTime(input.Start), Valid: true}
 
 	// Get device types
 	devices, err := s.Repo.GetClicksByDevice(ctx, db.GetClicksByDeviceParams{

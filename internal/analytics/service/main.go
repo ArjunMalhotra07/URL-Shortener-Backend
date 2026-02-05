@@ -59,21 +59,17 @@ type DeviceTypeStats struct {
 	Clicks     int64  `json:"clicks"`
 }
 
-// Helper function to parse time range
-func parseTimeRange(timeRange string) time.Time {
-	now := time.Now()
-	switch timeRange {
-	case "24h":
-		return now.Add(-24 * time.Hour)
-	case "7d":
-		return now.Add(-7 * 24 * time.Hour)
-	case "30d":
-		return now.Add(-30 * 24 * time.Hour)
-	case "90d":
-		return now.Add(-90 * 24 * time.Hour)
-	default:
-		return time.Time{} // zero time for "all"
+// Helper to check if time range is "all time" (zero start time)
+func isAllTime(start time.Time) bool {
+	return start.IsZero()
+}
+
+// Helper to get start time from time range - returns zero for "all"
+func getStartTime(start time.Time) time.Time {
+	if start.IsZero() {
+		return time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
 	}
+	return start
 }
 
 // Helper to get short URL and validate ownership
