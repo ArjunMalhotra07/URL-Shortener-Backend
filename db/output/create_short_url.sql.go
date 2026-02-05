@@ -89,6 +89,15 @@ func (q *Queries) CreateShortURL(ctx context.Context, arg CreateShortURLParams) 
 	return i, err
 }
 
+const deleteClicksByShortURLID = `-- name: DeleteClicksByShortURLID :exec
+DELETE FROM clicks WHERE short_url_id = $1
+`
+
+func (q *Queries) DeleteClicksByShortURLID(ctx context.Context, shortUrlID int64) error {
+	_, err := q.db.Exec(ctx, deleteClicksByShortURLID, shortUrlID)
+	return err
+}
+
 const getShortURLByCode = `-- name: GetShortURLByCode :one
 SELECT id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at
 FROM short_urls

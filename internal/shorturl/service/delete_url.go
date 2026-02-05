@@ -34,8 +34,8 @@ func (s *ShortURLSvcImp) DeleteURL(ctx context.Context, input DeleteURLInput) (D
 		quota = s.Cfg.MonthlyQuotaUser
 	}
 
-	// Verify ownership
-	_, err := s.Repo.GetURLByCodeAndOwner(ctx, db.GetURLByCodeAndOwnerParams{
+	// Verify ownership and get URL ID
+	url, err := s.Repo.GetURLByCodeAndOwner(ctx, db.GetURLByCodeAndOwnerParams{
 		Code:      input.Code,
 		OwnerType: ownerType,
 		OwnerID:   input.OwnerID,
@@ -47,6 +47,13 @@ func (s *ShortURLSvcImp) DeleteURL(ctx context.Context, input DeleteURLInput) (D
 		}
 		s.Logger.Error("failed to verify url ownership", "code", input.Code, "error", err)
 		return DeleteURLOutput{}, ErrURLDelete
+	}
+
+	// Delete analytics/clicks for this URL
+	err = s.Repo.DeleteClicksByShortURLID(ctx, url.ID)
+	if err != nil {
+		s.Logger.Error("failed to delete clicks", "code", input.Code, "error", err)
+		// Continue with URL deletion even if click deletion fails
 	}
 
 	err = s.Repo.SoftDeleteURL(ctx, db.SoftDeleteURLParams{

@@ -19,6 +19,7 @@ type ShortURLRepository interface {
 	ToggleURLActive(ctx context.Context, params db.ToggleURLActiveParams) error
 	SoftDeleteURL(ctx context.Context, params db.SoftDeleteURLParams) error
 	UpdateLongURL(ctx context.Context, params db.UpdateLongURLParams) (db.ShortUrl, error)
+	DeleteClicksByShortURLID(ctx context.Context, shortURLID int64) error
 }
 
 type ShortURLRepoImp struct {
@@ -81,4 +82,8 @@ func (r *ShortURLRepoImp) SoftDeleteURL(ctx context.Context, params db.SoftDelet
 
 func (r *ShortURLRepoImp) UpdateLongURL(ctx context.Context, params db.UpdateLongURLParams) (db.ShortUrl, error) {
 	return r.Queries.UpdateLongURL(ctx, params)
+}
+
+func (r *ShortURLRepoImp) DeleteClicksByShortURLID(ctx context.Context, shortURLID int64) error {
+	return r.Queries.DeleteClicksByShortURLID(ctx, shortURLID)
 }
