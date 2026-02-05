@@ -40,10 +40,11 @@ UPDATE short_urls
 SET is_deleted = TRUE
 WHERE code = $1 AND owner_type = $2 AND owner_id = $3 AND is_deleted = FALSE;
 
--- name: UpdateLongURL :exec
+-- name: UpdateLongURL :one
 UPDATE short_urls
-SET long_url = $4
-WHERE code = $1 AND owner_type = $2 AND owner_id = $3 AND is_deleted = FALSE;
+SET long_url = $4, expires_at = $5
+WHERE code = $1 AND owner_type = $2 AND owner_id = $3 AND is_deleted = FALSE
+RETURNING id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at;
 
 -- name: TransferAnonymousURLsToUser :exec
 UPDATE short_urls

@@ -266,27 +266,43 @@ func (q *Queries) TransferAnonymousURLsToUserWithLimit(ctx context.Context, arg 
 	return err
 }
 
-const updateLongURL = `-- name: UpdateLongURL :exec
+const updateLongURL = `-- name: UpdateLongURL :one
 UPDATE short_urls
-SET long_url = $4
+SET long_url = $4, expires_at = $5
 WHERE code = $1 AND owner_type = $2 AND owner_id = $3 AND is_deleted = FALSE
+RETURNING id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at
 `
 
 type UpdateLongURLParams struct {
-	Code      string        `json:"code"`
-	OwnerType OwnerTypeEnum `json:"owner_type"`
-	OwnerID   string        `json:"owner_id"`
-	LongUrl   string        `json:"long_url"`
+	Code      string             `json:"code"`
+	OwnerType OwnerTypeEnum      `json:"owner_type"`
+	OwnerID   string             `json:"owner_id"`
+	LongUrl   string             `json:"long_url"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
 }
 
-func (q *Queries) UpdateLongURL(ctx context.Context, arg UpdateLongURLParams) error {
-	_, err := q.db.Exec(ctx, updateLongURL,
+func (q *Queries) UpdateLongURL(ctx context.Context, arg UpdateLongURLParams) (ShortUrl, error) {
+	row := q.db.QueryRow(ctx, updateLongURL,
 		arg.Code,
 		arg.OwnerType,
 		arg.OwnerID,
 		arg.LongUrl,
+		arg.ExpiresAt,
 	)
-	return err
+	var i ShortUrl
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.LongUrl,
+		&i.OwnerType,
+		&i.OwnerID,
+		&i.IsActive,
+		&i.IsDeleted,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const updateShortURLCode = `-- name: UpdateShortURLCode :one
