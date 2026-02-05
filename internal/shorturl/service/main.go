@@ -20,8 +20,9 @@ type ShortURLSvc interface {
 	TransferURLsToUser(ctx context.Context, input TransferURLsInput) error
 	TransferAnonymousURLsWithQuota(ctx context.Context, anonID, userID string)
 	ToggleURLActive(ctx context.Context, input ToggleURLInput) error
-	DeleteURL(ctx context.Context, input DeleteURLInput) error
+	DeleteURL(ctx context.Context, input DeleteURLInput) (DeleteURLOutput, error)
 	UpdateLongURL(ctx context.Context, input UpdateLongURLInput) (*UpdateLongURLOutput, error)
+	GetUserURLCountThisMonth(ctx context.Context, userID string) (int64, error)
 }
 
 type ShortURLSvcImp struct {

@@ -23,6 +23,18 @@ type AuthService interface {
 	Refresh(ctx context.Context, refreshToken string) (AuthOutput, error)
 	Logout(ctx context.Context, refreshToken string) error
 	LogoutAll(ctx context.Context, userID string) error
+	GetMe(ctx context.Context, userID string) (MeOutput, error)
+}
+
+type MeOutput struct {
+	UserID              string
+	Email               string
+	Name                string
+	AvatarURL           string
+	Tier                string
+	SubscriptionEndsAt  *time.Time
+	URLsCreatedThisMonth int64
+	URLsLimit           int
 }
 
 type AuthSvcImp struct {

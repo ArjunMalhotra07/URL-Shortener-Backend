@@ -14,17 +14,24 @@ type DeleteURLInput struct {
 	OwnerID   string
 }
 
-func (s *ShortURLSvcImp) DeleteURL(ctx context.Context, input DeleteURLInput) error {
+type DeleteURLOutput struct {
+	URLsCreatedThisMonth int64
+	URLsLimit            int
+}
+
+func (s *ShortURLSvcImp) DeleteURL(ctx context.Context, input DeleteURLInput) (DeleteURLOutput, error) {
 	if input.Code == "" {
-		return ErrInvalidCode
+		return DeleteURLOutput{}, ErrInvalidCode
 	}
 	if input.OwnerID == "" {
-		return ErrInvalidOwner
+		return DeleteURLOutput{}, ErrInvalidOwner
 	}
 
 	ownerType := db.OwnerTypeEnumAnonymous
+	quota := s.Cfg.MonthlyQuotaAnonymous
 	if input.OwnerType == "user" {
 		ownerType = db.OwnerTypeEnumUser
+		quota = s.Cfg.MonthlyQuotaUser
 	}
 
 	// Verify ownership
@@ -36,10 +43,10 @@ func (s *ShortURLSvcImp) DeleteURL(ctx context.Context, input DeleteURLInput) er
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			s.Logger.Info("delete attempt on non-owned url", "code", input.Code, "owner_id", input.OwnerID)
-			return ErrURLNotOwned
+			return DeleteURLOutput{}, ErrURLNotOwned
 		}
 		s.Logger.Error("failed to verify url ownership", "code", input.Code, "error", err)
-		return ErrURLDelete
+		return DeleteURLOutput{}, ErrURLDelete
 	}
 
 	err = s.Repo.SoftDeleteURL(ctx, db.SoftDeleteURLParams{
@@ -49,12 +56,22 @@ func (s *ShortURLSvcImp) DeleteURL(ctx context.Context, input DeleteURLInput) er
 	})
 	if err != nil {
 		s.Logger.Error("failed to delete url", "code", input.Code, "error", err)
-		return ErrURLDelete
+		return DeleteURLOutput{}, ErrURLDelete
 	}
 
 	// Invalidate cache
 	s.InvalidateURLCache(ctx, input.Code)
 
+	// Get updated count
+	monthCount, err := s.Repo.CountURLsCreatedThisMonth(ctx, input.OwnerID)
+	if err != nil {
+		s.Logger.Error("failed to count urls after delete", "error", err)
+		monthCount = 0
+	}
+
 	s.Logger.Info("url deleted", "code", input.Code, "owner_id", input.OwnerID)
-	return nil
+	return DeleteURLOutput{
+		URLsCreatedThisMonth: monthCount,
+		URLsLimit:            quota,
+	}, nil
 }

@@ -9,6 +9,11 @@ import (
 	"url_shortner_backend/internal/shorturl/service"
 )
 
+type DeleteURLRes struct {
+	URLsCreatedThisMonth int64 `json:"urls_created_this_month"`
+	URLsLimit            int   `json:"urls_limit"`
+}
+
 func (h *ShortURLHandler) DeleteURL(c echo.Context) error {
 	code := c.Param("code")
 	if code == "" {
@@ -28,7 +33,7 @@ func (h *ShortURLHandler) DeleteURL(c echo.Context) error {
 		ownerID = getOrCreateAnonID(c)
 	}
 
-	err := h.Svc.DeleteURL(c.Request().Context(), service.DeleteURLInput{
+	output, err := h.Svc.DeleteURL(c.Request().Context(), service.DeleteURLInput{
 		Code:      code,
 		OwnerType: ownerType,
 		OwnerID:   ownerID,
@@ -44,5 +49,8 @@ func (h *ShortURLHandler) DeleteURL(c echo.Context) error {
 		}
 	}
 
-	return c.NoContent(http.StatusNoContent)
+	return c.JSON(http.StatusOK, DeleteURLRes{
+		URLsCreatedThisMonth: output.URLsCreatedThisMonth,
+		URLsLimit:            output.URLsLimit,
+	})
 }
