@@ -22,9 +22,9 @@ func (h *AnalyticsHandler) GetSummary(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorRes{Error: "code is required"})
 	}
 
-	timeRange := c.QueryParam("range")
-	if timeRange == "" {
-		timeRange = "7d" // default to 7 days
+	timeRange, errMsg := parseTimeRangeParams(c)
+	if errMsg != "" {
+		return c.JSON(http.StatusBadRequest, ErrorRes{Error: errMsg})
 	}
 
 	ownerType, ownerID, authExpired := getOwnerInfo(c)
@@ -36,7 +36,8 @@ func (h *AnalyticsHandler) GetSummary(c echo.Context) error {
 		Code:      code,
 		OwnerType: ownerType,
 		OwnerID:   ownerID,
-		TimeRange: timeRange,
+		Start:     timeRange.Start,
+		End:       timeRange.End,
 	})
 	if err != nil {
 		return handleAnalyticsError(c, err)

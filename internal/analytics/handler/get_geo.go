@@ -20,9 +20,9 @@ func (h *AnalyticsHandler) GetGeo(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorRes{Error: "code is required"})
 	}
 
-	timeRange := c.QueryParam("range")
-	if timeRange == "" {
-		timeRange = "7d"
+	timeRange, errMsg := parseTimeRangeParams(c)
+	if errMsg != "" {
+		return c.JSON(http.StatusBadRequest, ErrorRes{Error: errMsg})
 	}
 
 	limit := int32(10)
@@ -41,7 +41,8 @@ func (h *AnalyticsHandler) GetGeo(c echo.Context) error {
 		Code:      code,
 		OwnerType: ownerType,
 		OwnerID:   ownerID,
-		TimeRange: timeRange,
+		Start:     timeRange.Start,
+		End:       timeRange.End,
 		Limit:     limit,
 	})
 	if err != nil {
