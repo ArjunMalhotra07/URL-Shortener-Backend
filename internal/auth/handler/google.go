@@ -57,7 +57,7 @@ func (h *AuthHandler) GoogleLogin(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrEmailExistsWithPassword):
-			return c.JSON(http.StatusConflict, ErrorRes{Error: "email already registered with password. Please login with password."})
+			return c.JSON(http.StatusConflict, ErrorRes{Error: "Email already registered with password."})
 		default:
 			return c.JSON(http.StatusInternalServerError, ErrorRes{Error: "google login failed"})
 		}
