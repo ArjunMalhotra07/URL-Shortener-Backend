@@ -14,11 +14,10 @@ import (
 	"url_shortner_backend/pkg/geoip"
 	"url_shortner_backend/pkg/httpserver"
 	"url_shortner_backend/pkg/jwt"
+	"url_shortner_backend/pkg/logger"
 	"url_shortner_backend/pkg/migrate"
 	"url_shortner_backend/pkg/postgres"
 	"url_shortner_backend/pkg/redis"
-
-	"github.com/rs/zerolog"
 )
 
 func main() {
@@ -28,7 +27,7 @@ func main() {
 		panic("couldn't start server no config found")
 	}
 	// Load logger
-	logr := zerolog.New(os.Stdout).With().Timestamp().CallerWithSkipFrameCount(4).Logger()
+	logr := logger.New(cfg.APP_ENV == "dev")
 
 	// Run migrations
 	migrate.RunMigrations(cfg.DBDSN)
