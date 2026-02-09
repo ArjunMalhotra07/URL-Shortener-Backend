@@ -66,3 +66,6 @@ SELECT COUNT(*) FROM short_urls
 WHERE owner_id = $1
 AND created_at >= date_trunc('month', CURRENT_TIMESTAMP)
 AND is_deleted = FALSE;
+
+-- name: DeleteClicksByShortURLID :exec
+DELETE FROM clicks WHERE short_url_id = $1;

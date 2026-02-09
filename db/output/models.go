@@ -69,6 +69,67 @@ func AllOwnerTypeEnumValues() []OwnerTypeEnum {
 	}
 }
 
+type SubscriptionTier string
+
+const (
+	SubscriptionTierFree     SubscriptionTier = "free"
+	SubscriptionTierPro      SubscriptionTier = "pro"
+	SubscriptionTierBusiness SubscriptionTier = "business"
+)
+
+func (e *SubscriptionTier) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = SubscriptionTier(s)
+	case string:
+		*e = SubscriptionTier(s)
+	default:
+		return fmt.Errorf("unsupported scan type for SubscriptionTier: %T", src)
+	}
+	return nil
+}
+
+type NullSubscriptionTier struct {
+	SubscriptionTier SubscriptionTier `json:"subscription_tier"`
+	Valid            bool             `json:"valid"` // Valid is true if SubscriptionTier is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullSubscriptionTier) Scan(value interface{}) error {
+	if value == nil {
+		ns.SubscriptionTier, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.SubscriptionTier.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullSubscriptionTier) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.SubscriptionTier), nil
+}
+
+func (e SubscriptionTier) Valid() bool {
+	switch e {
+	case SubscriptionTierFree,
+		SubscriptionTierPro,
+		SubscriptionTierBusiness:
+		return true
+	}
+	return false
+}
+
+func AllSubscriptionTierValues() []SubscriptionTier {
+	return []SubscriptionTier{
+		SubscriptionTierFree,
+		SubscriptionTierPro,
+		SubscriptionTierBusiness,
+	}
+}
+
 type Click struct {
 	ID             int64              `json:"id"`
 	ShortUrlID     int64              `json:"short_url_id"`
@@ -117,8 +178,11 @@ type User struct {
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
 	// 0 = email/password, 1 = google
-	LoginType int16       `json:"login_type"`
-	GoogleID  pgtype.Text `json:"google_id"`
-	Name      pgtype.Text `json:"name"`
-	AvatarUrl pgtype.Text `json:"avatar_url"`
+	LoginType          int16              `json:"login_type"`
+	GoogleID           pgtype.Text        `json:"google_id"`
+	Name               pgtype.Text        `json:"name"`
+	AvatarUrl          pgtype.Text        `json:"avatar_url"`
+	Tier               SubscriptionTier   `json:"tier"`
+	StripeCustomerID   pgtype.Text        `json:"stripe_customer_id"`
+	SubscriptionEndsAt pgtype.Timestamptz `json:"subscription_ends_at"`
 }

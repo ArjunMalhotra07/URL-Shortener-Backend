@@ -31,12 +31,14 @@ type CreateShortURLReq struct {
 }
 
 type CreateShortURLRes struct {
-	Code      string  `json:"code"`
-	LongURL   string  `json:"long_url"`
-	OwnerType string  `json:"owner_type"`
-	IsActive  bool    `json:"is_active"`
-	ExpiresAt *string `json:"expires_at,omitempty"`
-	CreatedAt string  `json:"created_at"`
+	Code                 string  `json:"code"`
+	LongURL              string  `json:"long_url"`
+	OwnerType            string  `json:"owner_type"`
+	IsActive             bool    `json:"is_active"`
+	ExpiresAt            *string `json:"expires_at,omitempty"`
+	CreatedAt            string  `json:"created_at"`
+	URLsCreatedThisMonth int64   `json:"urls_created_this_month"`
+	URLsLimit            int     `json:"urls_limit"`
 }
 
 type ErrorRes struct {
@@ -101,12 +103,14 @@ func (h *ShortURLHandler) CreateShortURL(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, CreateShortURLRes{
-		Code:      output.Code,
-		LongURL:   output.LongURL,
-		OwnerType: output.OwnerType,
-		IsActive:  output.IsActive,
-		ExpiresAt: expiresAtStr,
-		CreatedAt: output.CreatedAt.UTC().Format(time.RFC3339),
+		Code:                 output.Code,
+		LongURL:              output.LongURL,
+		OwnerType:            output.OwnerType,
+		IsActive:             output.IsActive,
+		ExpiresAt:            expiresAtStr,
+		CreatedAt:            output.CreatedAt.UTC().Format(time.RFC3339),
+		URLsCreatedThisMonth: output.URLsCreatedThisMonth,
+		URLsLimit:            output.URLsLimit,
 	})
 }
 

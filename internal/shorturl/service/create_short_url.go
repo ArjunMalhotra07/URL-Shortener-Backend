@@ -16,13 +16,15 @@ type CreateShortURLInput struct {
 	ExpiresAt *time.Time
 }
 type CreateShortURLOutput struct {
-	ID        int64
-	Code      string
-	LongURL   string
-	OwnerType string
-	IsActive  bool
-	ExpiresAt *time.Time
-	CreatedAt time.Time
+	ID                   int64
+	Code                 string
+	LongURL              string
+	OwnerType            string
+	IsActive             bool
+	ExpiresAt            *time.Time
+	CreatedAt            time.Time
+	URLsCreatedThisMonth int64
+	URLsLimit            int
 }
 
 func (s *ShortURLSvcImp) CreateShortURL(ctx context.Context, input CreateShortURLInput) (CreateShortURLOutput, error) {
@@ -95,12 +97,14 @@ func (s *ShortURLSvcImp) CreateShortURL(ctx context.Context, input CreateShortUR
 	}
 
 	return CreateShortURLOutput{
-		ID:        updatedRow.ID,
-		Code:      updatedRow.Code,
-		LongURL:   updatedRow.LongUrl,
-		OwnerType: string(updatedRow.OwnerType),
-		IsActive:  true,
-		ExpiresAt: outputExpiresAt,
-		CreatedAt: updatedRow.CreatedAt.Time,
+		ID:                   updatedRow.ID,
+		Code:                 updatedRow.Code,
+		LongURL:              updatedRow.LongUrl,
+		OwnerType:            string(updatedRow.OwnerType),
+		IsActive:             true,
+		ExpiresAt:            outputExpiresAt,
+		CreatedAt:            updatedRow.CreatedAt.Time,
+		URLsCreatedThisMonth: monthCount + 1, // +1 for the one we just created
+		URLsLimit:            quota,
 	}, nil
 }
