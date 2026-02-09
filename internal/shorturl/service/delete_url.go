@@ -42,17 +42,17 @@ func (s *ShortURLSvcImp) DeleteURL(ctx context.Context, input DeleteURLInput) (D
 	})
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			s.Logger.Info("delete attempt on non-owned url", "code", input.Code, "owner_id", input.OwnerID)
+			s.Logger.Info().Str("code", input.Code).Str("owner_id", input.OwnerID).Msg("delete attempt on non-owned url")
 			return DeleteURLOutput{}, ErrURLNotOwned
 		}
-		s.Logger.Error("failed to verify url ownership", "code", input.Code, "error", err)
+		s.Logger.Err(err).Str("code", input.Code).Msg("failed to verify url ownership")
 		return DeleteURLOutput{}, ErrURLDelete
 	}
 
 	// Delete analytics/clicks for this URL
 	err = s.Repo.DeleteClicksByShortURLID(ctx, url.ID)
 	if err != nil {
-		s.Logger.Error("failed to delete clicks", "code", input.Code, "error", err)
+		s.Logger.Err(err).Str("code", input.Code).Msg("failed to delete clicks")
 		// Continue with URL deletion even if click deletion fails
 	}
 
@@ -62,7 +62,7 @@ func (s *ShortURLSvcImp) DeleteURL(ctx context.Context, input DeleteURLInput) (D
 		OwnerID:   input.OwnerID,
 	})
 	if err != nil {
-		s.Logger.Error("failed to delete url", "code", input.Code, "error", err)
+		s.Logger.Err(err).Str("code", input.Code).Msg("failed to delete url")
 		return DeleteURLOutput{}, ErrURLDelete
 	}
 
@@ -72,11 +72,11 @@ func (s *ShortURLSvcImp) DeleteURL(ctx context.Context, input DeleteURLInput) (D
 	// Get updated count
 	monthCount, err := s.Repo.CountURLsCreatedThisMonth(ctx, input.OwnerID)
 	if err != nil {
-		s.Logger.Error("failed to count urls after delete", "error", err)
+		s.Logger.Err(err).Msg("failed to count urls after delete")
 		monthCount = 0
 	}
 
-	s.Logger.Info("url deleted", "code", input.Code, "owner_id", input.OwnerID)
+	s.Logger.Info().Str("code", input.Code).Str("owner_id", input.OwnerID).Msg("url deleted")
 	return DeleteURLOutput{
 		URLsCreatedThisMonth: monthCount,
 		URLsLimit:            quota,

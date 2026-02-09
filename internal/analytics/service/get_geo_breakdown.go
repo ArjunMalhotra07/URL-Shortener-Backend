@@ -50,44 +50,30 @@ func (s *AnalyticsSvcImp) GetGeoBreakdown(ctx context.Context, input GetGeoInput
 		Limit:      limit,
 	})
 	if err != nil {
-		s.Logger.Error("failed to get countries", "error", err)
+		s.Logger.Err(err).Msg("failed to get countries")
 		return GetGeoOutput{}, ErrAnalyticsFetch
 	}
 
 	countryStats := make([]CountryStats, 0, len(countries))
 	for _, c := range countries {
 		if c.Country.Valid {
-			countryStats = append(countryStats, CountryStats{
-				Country: c.Country.String,
-				Clicks:  c.Clicks,
-			})
+			countryStats = append(countryStats, CountryStats{Country: c.Country.String, Clicks: c.Clicks})
 		}
 	}
 
 	// Get cities
-	cities, err := s.Repo.GetClicksByCity(ctx, db.GetClicksByCityParams{
-		ShortUrlID: shortURL.ID,
-		ClickedAt:  clickedAtParam,
-		Limit:      limit,
-	})
+	cities, err := s.Repo.GetClicksByCity(ctx, db.GetClicksByCityParams{ShortUrlID: shortURL.ID, ClickedAt: clickedAtParam, Limit: limit})
 	if err != nil {
-		s.Logger.Error("failed to get cities", "error", err)
+		s.Logger.Err(err).Msg("failed to get cities")
 		return GetGeoOutput{}, ErrAnalyticsFetch
 	}
 
 	cityStats := make([]CityStats, 0, len(cities))
 	for _, c := range cities {
 		if c.City.Valid {
-			cityStats = append(cityStats, CityStats{
-				City:    c.City.String,
-				Country: c.Country.String,
-				Clicks:  c.Clicks,
-			})
+			cityStats = append(cityStats, CityStats{City: c.City.String, Country: c.Country.String, Clicks: c.Clicks})
 		}
 	}
 
-	return GetGeoOutput{
-		Countries: countryStats,
-		Cities:    cityStats,
-	}, nil
+	return GetGeoOutput{Countries: countryStats, Cities: cityStats}, nil
 }

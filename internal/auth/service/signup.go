@@ -23,14 +23,14 @@ func (s *AuthSvcImp) Signup(ctx context.Context, input SignupInput) (AuthOutput,
 		return AuthOutput{}, ErrEmailExists
 	}
 	if err != pgx.ErrNoRows {
-		s.Logger.Error("failed to check existing user", "email", email, "error", err)
+		s.Logger.Err(err).Str("email", email).Msg("failed to check existing user")
 		return AuthOutput{}, ErrUserCreation
 	}
 
 	// Hash password
 	passwordHash, err := hash.HashPassword(input.Password)
 	if err != nil {
-		s.Logger.Error("failed to hash password", "error", err)
+		s.Logger.Err(err).Msg("failed to hash password")
 		return AuthOutput{}, ErrUserCreation
 	}
 
@@ -40,7 +40,7 @@ func (s *AuthSvcImp) Signup(ctx context.Context, input SignupInput) (AuthOutput,
 		PasswordHash: pgtype.Text{String: passwordHash, Valid: true},
 	})
 	if err != nil {
-		s.Logger.Error("failed to create user", "email", email, "error", err)
+		s.Logger.Err(err).Str("email", email).Msg("failed to create user")
 		return AuthOutput{}, ErrUserCreation
 	}
 

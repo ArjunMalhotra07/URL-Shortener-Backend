@@ -3,20 +3,21 @@ package main
 import (
 	"url_shortner_backend/pkg/config"
 	"url_shortner_backend/pkg/httpserver"
-	"url_shortner_backend/pkg/logger"
+
+	"github.com/rs/zerolog"
 )
 
 type Server struct {
 	Config config.Config
 	Http   httpserver.Server
-	Logger logger.Logger
+	Logger zerolog.Logger
 	// Services *services.Services
 }
 
 type ServerParams struct {
 	Config config.Config
 	Http   httpserver.Server
-	Logger logger.Logger
+	Logger zerolog.Logger
 	// Services *services.Services
 }
 

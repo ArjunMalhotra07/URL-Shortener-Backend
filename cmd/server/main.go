@@ -14,10 +14,11 @@ import (
 	"url_shortner_backend/pkg/geoip"
 	"url_shortner_backend/pkg/httpserver"
 	"url_shortner_backend/pkg/jwt"
-	"url_shortner_backend/pkg/logger"
 	"url_shortner_backend/pkg/migrate"
 	"url_shortner_backend/pkg/postgres"
 	"url_shortner_backend/pkg/redis"
+
+	"github.com/rs/zerolog"
 )
 
 func main() {
@@ -27,7 +28,7 @@ func main() {
 		panic("couldn't start server no config found")
 	}
 	// Load logger
-	logr := logger.NewZeroLogger()
+	logr := zerolog.New(os.Stdout).With().Timestamp().CallerWithSkipFrameCount(4).Logger()
 
 	// Run migrations
 	migrate.RunMigrations(cfg.DBDSN)
@@ -62,10 +63,10 @@ func main() {
 			DB:       cfg.RedisDB,
 		})
 		if err != nil {
-			logr.Info("redis connection failed, analytics caching disabled", "error", err)
+			logr.Err(err).Msg("redis connection failed, analytics caching disabled")
 		} else {
 			defer redisClient.Close()
-			logr.Info("connected to redis", "addr", cfg.RedisAddr)
+			logr.Info().Str("addr", cfg.RedisAddr).Msg("connected to redis")
 		}
 	}
 
@@ -74,12 +75,12 @@ func main() {
 	if cfg.GeoIPDBPath != "" {
 		realGeoIP, err := geoip.NewGeoIPService(cfg.GeoIPDBPath)
 		if err != nil {
-			logr.Info("GeoIP database not loaded, geo lookups disabled", "error", err, "path", cfg.GeoIPDBPath)
+			logr.Err(err).Str("path", cfg.GeoIPDBPath).Msg("GeoIP database not loaded, geo lookups disabled")
 			geoIPSvc = geoip.NewNullGeoIPService()
 		} else {
 			defer realGeoIP.Close()
 			geoIPSvc = realGeoIP
-			logr.Info("loaded GeoIP database", "path", cfg.GeoIPDBPath)
+			logr.Info().Str("path", cfg.GeoIPDBPath).Msg("loaded GeoIP database")
 		}
 	} else {
 		geoIPSvc = geoip.NewNullGeoIPService()
@@ -99,7 +100,7 @@ func main() {
 	svr := httpserver.NewEchoServer(svcs, jwtMgr)
 
 	go func() {
-		logr.Info("Starting server", "addr", cfg.ServerPort)
+		logr.Info().Str("addr", cfg.ServerPort).Msg("Starting server")
 		if err := svr.Start(cfg.ServerPort); err != nil {
 			log.Fatal("server stopped: ", err)
 		}

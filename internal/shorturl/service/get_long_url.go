@@ -25,7 +25,7 @@ const urlCacheTTL = 10 * time.Minute
 
 func (s *ShortURLSvcImp) GetLongURL(ctx context.Context, input GetLongURLInput) (GetLongURLOutput, error) {
 	if input.Code == "" {
-		s.Logger.Error("empty code provided")
+		s.Logger.Error().Msg("empty code provided")
 		return GetLongURLOutput{}, ErrInvalidCode
 	}
 
@@ -39,7 +39,7 @@ func (s *ShortURLSvcImp) GetLongURL(ctx context.Context, input GetLongURLInput) 
 			if json.Unmarshal([]byte(cached), &cu) == nil {
 				// Extend TTL on hit (sliding expiration)
 				_ = s.Redis.Expire(ctx, cacheKey, urlCacheTTL)
-				s.Logger.Debug("cache hit", "code", input.Code)
+				s.Logger.Debug().Str("code", input.Code).Msg("cache hit")
 				return GetLongURLOutput{
 					ID:      cu.ID,
 					LongURL: cu.LongURL,
@@ -51,19 +51,19 @@ func (s *ShortURLSvcImp) GetLongURL(ctx context.Context, input GetLongURLInput) 
 	// Cache miss - query DB
 	shortURL, err := s.Repo.GetShortURLByCode(ctx, input.Code)
 	if err != nil {
-		s.Logger.Error("failed to get short url", "code", input.Code, "error", err)
+		s.Logger.Err(err).Str("code", input.Code).Msg("failed to get short url")
 		return GetLongURLOutput{}, ErrURLNotFound
 	}
 
 	// Check if URL is active
 	if !shortURL.IsActive {
-		s.Logger.Info("short url is inactive", "code", input.Code)
+		s.Logger.Info().Str("code", input.Code).Msg("short url is inactive")
 		return GetLongURLOutput{}, ErrURLInactive
 	}
 
 	// Check if URL has expired
 	if shortURL.ExpiresAt.Valid && shortURL.ExpiresAt.Time.Before(time.Now()) {
-		s.Logger.Info("short url has expired", "code", input.Code)
+		s.Logger.Info().Str("code", input.Code).Msg("short url has expired")
 		return GetLongURLOutput{}, ErrURLExpired
 	}
 
@@ -81,17 +81,11 @@ func (s *ShortURLSvcImp) GetLongURL(ctx context.Context, input GetLongURLInput) 
 			}
 			if ttl > 0 {
 				_ = s.Redis.Set(ctx, cacheKey, string(data), ttl)
-				s.Logger.Debug("cached url", "code", input.Code, "ttl", ttl)
+				s.Logger.Debug().Str("code", input.Code).Dur("ttl", ttl).Msg("cached url")
 			}
 		}
 	}
-
-	s.Logger.Info("long url retrieved", "code", input.Code)
-
-	return GetLongURLOutput{
-		ID:      shortURL.ID,
-		LongURL: shortURL.LongUrl,
-	}, nil
+	return GetLongURLOutput{ID: shortURL.ID, LongURL: shortURL.LongUrl}, nil
 }
 
 // InvalidateURLCache removes a URL from cache (call when URL is updated/toggled/deleted)
@@ -99,6 +93,6 @@ func (s *ShortURLSvcImp) InvalidateURLCache(ctx context.Context, code string) {
 	if s.Redis != nil {
 		cacheKey := fmt.Sprintf("url:%s", code)
 		_ = s.Redis.Del(ctx, cacheKey)
-		s.Logger.Debug("invalidated cache", "code", code)
+		s.Logger.Debug().Str("code", code).Msg("invalidated cache")
 	}
 }

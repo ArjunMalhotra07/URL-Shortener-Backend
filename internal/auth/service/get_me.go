@@ -9,14 +9,14 @@ import (
 func (s *AuthSvcImp) GetMe(ctx context.Context, userID string) (MeOutput, error) {
 	user, err := s.Repo.GetUserByID(ctx, stringToUUID(userID))
 	if err != nil {
-		s.Logger.Error("failed to get user", "user_id", userID, "error", err)
+		s.Logger.Err(err).Str("user_id", userID).Msg("failed to get user")
 		return MeOutput{}, ErrUserNotFound
 	}
 
 	// Get URL count for this month
 	urlsThisMonth, err := s.ShortURLSvc.GetUserURLCountThisMonth(ctx, userID)
 	if err != nil {
-		s.Logger.Error("failed to get url count", "user_id", userID, "error", err)
+		s.Logger.Err(err).Str("user_id", userID).Msg("failed to get url count")
 		urlsThisMonth = 0
 	}
 

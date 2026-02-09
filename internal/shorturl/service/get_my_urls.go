@@ -28,7 +28,7 @@ type ShortURLItem struct {
 
 func (s *ShortURLSvcImp) GetMyURLs(ctx context.Context, input GetMyURLsInput) (GetMyURLsOutput, error) {
 	if input.OwnerID == "" {
-		s.Logger.Error("empty owner id provided")
+		s.Logger.Error().Msg("empty owner id provided")
 		return GetMyURLsOutput{}, ErrInvalidOwner
 	}
 
@@ -44,7 +44,7 @@ func (s *ShortURLSvcImp) GetMyURLs(ctx context.Context, input GetMyURLsInput) (G
 		Offset:    input.Offset,
 	})
 	if err != nil {
-		s.Logger.Error("failed to get urls by owner", "owner_id", input.OwnerID, "error", err)
+		s.Logger.Err(err).Str("owner_id", input.OwnerID).Msg("failed to get urls by owner")
 		return GetMyURLsOutput{}, ErrURLFetch
 	}
 
@@ -53,7 +53,7 @@ func (s *ShortURLSvcImp) GetMyURLs(ctx context.Context, input GetMyURLsInput) (G
 		OwnerID:   input.OwnerID,
 	})
 	if err != nil {
-		s.Logger.Error("failed to count urls by owner", "owner_id", input.OwnerID, "error", err)
+		s.Logger.Err(err).Str("owner_id", input.OwnerID).Msg("failed to count urls by owner")
 		return GetMyURLsOutput{}, ErrURLFetch
 	}
 
@@ -77,7 +77,7 @@ func (s *ShortURLSvcImp) GetMyURLs(ctx context.Context, input GetMyURLsInput) (G
 		}
 	}
 
-	s.Logger.Info("urls retrieved", "owner_id", input.OwnerID, "count", len(items), "total", total)
+	s.Logger.Info().Str("owner_id", input.OwnerID).Int("count", len(items)).Int64("total", total).Msg("urls retrieved")
 
 	return GetMyURLsOutput{URLs: items, Total: total}, nil
 }

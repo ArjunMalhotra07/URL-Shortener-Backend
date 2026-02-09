@@ -37,7 +37,7 @@ func (s *ShortURLSvcImp) UpdateLongURL(ctx context.Context, input UpdateLongURLI
 
 	longURL := normalizeURL(input.LongURL)
 	if err := validateURL(longURL); err != nil {
-		s.Logger.Error("invalid url provided", "url", longURL, "error", err)
+		s.Logger.Err(err).Str("url", longURL).Msg("invalid url provided")
 		return nil, ErrInvalidURL
 	}
 
@@ -59,10 +59,10 @@ func (s *ShortURLSvcImp) UpdateLongURL(ctx context.Context, input UpdateLongURLI
 	})
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			s.Logger.Info("update attempt on non-owned url", "code", input.Code, "owner_id", input.OwnerID)
+			s.Logger.Info().Str("owner_id", input.OwnerID).Str("code", input.Code).Msg("update attempt on non-owned url")
 			return nil, ErrURLNotOwned
 		}
-		s.Logger.Error("failed to verify url ownership", "code", input.Code, "error", err)
+		s.Logger.Err(err).Str("code", input.Code).Msg("failed to verify url ownership")
 		return nil, ErrURLUpdate
 	}
 
@@ -80,22 +80,14 @@ func (s *ShortURLSvcImp) UpdateLongURL(ctx context.Context, input UpdateLongURLI
 		expiresAt = existingURL.ExpiresAt
 	}
 
-	updatedURL, err := s.Repo.UpdateLongURL(ctx, db.UpdateLongURLParams{
-		Code:      input.Code,
-		OwnerType: ownerType,
-		OwnerID:   input.OwnerID,
-		LongUrl:   longURL,
-		ExpiresAt: expiresAt,
-	})
+	updatedURL, err := s.Repo.UpdateLongURL(ctx, db.UpdateLongURLParams{Code: input.Code, OwnerType: ownerType, OwnerID: input.OwnerID, LongUrl: longURL, ExpiresAt: expiresAt})
 	if err != nil {
-		s.Logger.Error("failed to update long url", "code", input.Code, "error", err)
+		s.Logger.Err(err).Str("code", input.Code).Msg("failed to update long url")
 		return nil, ErrURLUpdate
 	}
-
 	// Invalidate cache
 	s.InvalidateURLCache(ctx, input.Code)
-
-	s.Logger.Info("url updated", "code", input.Code, "owner_id", input.OwnerID)
+	s.Logger.Info().Str("owner_id", input.OwnerID).Str("code", input.Code).Msg("url updated")
 
 	// Build response
 	output := &UpdateLongURLOutput{
