@@ -86,11 +86,10 @@ func (s *AnalyticsSvcImp) RecordClick(ctx context.Context, input RecordClickInpu
 
 	err := s.Repo.InsertClick(ctx, params)
 	if err != nil {
-		s.Logger.Error("failed to record click", "error", err, "short_url_id", input.ShortURLID)
+		s.Logger.Err(err).Int64("short_url_id", input.ShortURLID).Msg("failed to record click")
 		return ErrClickRecording
 	}
-
-	s.Logger.Debug("click recorded", "short_url_id", input.ShortURLID, "country", country, "device", parsedUA.DeviceType)
+	s.Logger.Debug().Int64("short_url_id", input.ShortURLID).Str("country", country).Str("device", parsedUA.DeviceType).Msg("click recorded")
 	return nil
 }
 

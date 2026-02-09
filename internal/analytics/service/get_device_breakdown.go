@@ -48,7 +48,7 @@ func (s *AnalyticsSvcImp) GetDeviceBreakdown(ctx context.Context, input GetDevic
 		ClickedAt:  clickedAtParam,
 	})
 	if err != nil {
-		s.Logger.Error("failed to get devices", "error", err)
+		s.Logger.Err(err).Msg("failed to get devices")
 		return GetDeviceOutput{}, ErrAnalyticsFetch
 	}
 
@@ -68,7 +68,7 @@ func (s *AnalyticsSvcImp) GetDeviceBreakdown(ctx context.Context, input GetDevic
 		ClickedAt:  clickedAtParam,
 	})
 	if err != nil {
-		s.Logger.Error("failed to get browsers", "error", err)
+		s.Logger.Err(err).Msg("failed to get browsers")
 		return GetDeviceOutput{}, ErrAnalyticsFetch
 	}
 
@@ -88,7 +88,7 @@ func (s *AnalyticsSvcImp) GetDeviceBreakdown(ctx context.Context, input GetDevic
 		ClickedAt:  clickedAtParam,
 	})
 	if err != nil {
-		s.Logger.Error("failed to get OS", "error", err)
+		s.Logger.Err(err).Msg("failed to get OS")
 		return GetDeviceOutput{}, ErrAnalyticsFetch
 	}
 

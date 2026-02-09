@@ -14,8 +14,9 @@ import (
 	"url_shortner_backend/pkg/config"
 	"url_shortner_backend/pkg/geoip"
 	"url_shortner_backend/pkg/jwt"
-	"url_shortner_backend/pkg/logger"
 	"url_shortner_backend/pkg/redis"
+
+	"github.com/rs/zerolog"
 )
 
 type AppServices struct {
@@ -29,7 +30,7 @@ type AnalyticsSvc = analyticsservice.AnalyticsSvc
 
 type AppServicesParams struct {
 	Queries *db.Queries
-	Logger  logger.Logger
+	Logger  zerolog.Logger
 	JWT     *jwt.JWTManager
 	Cfg     *config.Config
 	Redis   *redis.RedisClient

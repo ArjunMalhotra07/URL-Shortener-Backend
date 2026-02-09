@@ -15,21 +15,21 @@ func (s *AuthSvcImp) Login(ctx context.Context, input LoginInput) (AuthOutput, e
 	user, err := s.Repo.GetUserByEmail(ctx, email)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			s.Logger.Info("login attempt for non-existent user", "email", email)
+			s.Logger.Info().Str("email", email).Msg("login attempt for non-existent user")
 			return AuthOutput{}, ErrInvalidCredentials
 		}
-		s.Logger.Error("failed to get user", "email", email, "error", err)
+		s.Logger.Err(err).Str("email", email).Msg("failed to get user")
 		return AuthOutput{}, ErrInvalidCredentials
 	}
 
 	// Check if user signed up with Google
 	if user.LoginType == 1 {
-		s.Logger.Info("password login attempt for google user", "email", email)
+		s.Logger.Info().Str("email", email).Msg("password login attempt for google user")
 		return AuthOutput{}, ErrEmailExistsWithGoogle
 	}
 
 	if !hash.CheckPassword(input.Password, user.PasswordHash.String) {
-		s.Logger.Info("login attempt with wrong password", "email", email)
+		s.Logger.Info().Str("email", email).Msg("login attempt with wrong password")
 		return AuthOutput{}, ErrInvalidCredentials
 	}
 
@@ -40,6 +40,6 @@ func (s *AuthSvcImp) Login(ctx context.Context, input LoginInput) (AuthOutput, e
 		s.ShortURLSvc.TransferAnonymousURLsWithQuota(ctx, input.AnonID, userID)
 	}
 
-	s.Logger.Info("user logged in successfully", "email", email, "user_id", userID)
+	s.Logger.Info().Str("email", email).Str("user_id", userID).Msg("user logged in successfully")
 	return s.generateTokens(ctx, userID, email)
 }

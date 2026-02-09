@@ -31,14 +31,14 @@ func (s *ShortURLSvcImp) CreateShortURL(ctx context.Context, input CreateShortUR
 	longURL := normalizeURL(input.LongURL)
 
 	if err := validateURL(longURL); err != nil {
-		s.Logger.Error("invalid url provided", "url", longURL, "error", err)
+		s.Logger.Err(err).Str("url", longURL).Msg("invalid url provided")
 		return CreateShortURLOutput{}, ErrInvalidURL
 	}
 
 	// Check monthly quota
 	monthCount, err := s.Repo.CountURLsCreatedThisMonth(ctx, input.OwnerID)
 	if err != nil {
-		s.Logger.Error("failed to count this month's urls", "owner_id", input.OwnerID, "error", err)
+		s.Logger.Err(err).Str("owner_id", input.OwnerID).Msg("failed to count this month's urls")
 		return CreateShortURLOutput{}, ErrURLCreation
 	}
 
@@ -49,7 +49,7 @@ func (s *ShortURLSvcImp) CreateShortURL(ctx context.Context, input CreateShortUR
 	}
 
 	if int(monthCount) >= quota {
-		s.Logger.Info("monthly quota exceeded", "owner_id", input.OwnerID, "owner_type", input.OwnerType, "count", monthCount, "quota", quota)
+		s.Logger.Info().Str("owner_id", input.OwnerID).Str("owner_type", input.OwnerType).Int64("count", monthCount).Int("quota", quota).Msg("monthly quota exceeded")
 		return CreateShortURLOutput{}, ErrMonthlyQuotaExceeded
 	}
 
@@ -74,7 +74,7 @@ func (s *ShortURLSvcImp) CreateShortURL(ctx context.Context, input CreateShortUR
 		ExpiresAt: expiresAt,
 	})
 	if err != nil {
-		s.Logger.Error("failed to create short url", "error", err)
+		s.Logger.Err(err).Msg("failed to create short url")
 		return CreateShortURLOutput{}, ErrURLCreation
 	}
 
@@ -85,11 +85,11 @@ func (s *ShortURLSvcImp) CreateShortURL(ctx context.Context, input CreateShortUR
 		Code: code,
 	})
 	if err != nil {
-		s.Logger.Error("failed to update short url code", "id", row.ID, "error", err)
+		s.Logger.Err(err).Int64("id", row.ID).Msg("failed to update short url code")
 		return CreateShortURLOutput{}, ErrURLCodeUpdate
 	}
 
-	s.Logger.Info("short url created", "id", updatedRow.ID, "code", updatedRow.Code, "owner_type", updatedRow.OwnerType)
+	s.Logger.Info().Int64("id", updatedRow.ID).Str("code", updatedRow.Code).Str("owner_type", string(updatedRow.OwnerType)).Msg("short url created")
 
 	var outputExpiresAt *time.Time
 	if updatedRow.ExpiresAt.Valid {

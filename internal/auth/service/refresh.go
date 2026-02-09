@@ -14,7 +14,7 @@ func (s *AuthSvcImp) Refresh(ctx context.Context, refreshToken string) (AuthOutp
 		if err == pgx.ErrNoRows {
 			return AuthOutput{}, ErrInvalidToken
 		}
-		s.Logger.Error("failed to get refresh token", "error", err)
+		s.Logger.Err(err).Msg("failed to get refresh token")
 		return AuthOutput{}, ErrInvalidToken
 	}
 
@@ -23,7 +23,7 @@ func (s *AuthSvcImp) Refresh(ctx context.Context, refreshToken string) (AuthOutp
 
 	user, err := s.Repo.GetUserByID(ctx, storedToken.UserID)
 	if err != nil {
-		s.Logger.Error("failed to get user for refresh", "error", err)
+		s.Logger.Err(err).Msg("failed to get user for refresh")
 		return AuthOutput{}, ErrUserNotFound
 	}
 

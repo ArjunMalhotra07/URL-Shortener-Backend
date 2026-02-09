@@ -8,8 +8,9 @@ import (
 	"url_shortner_backend/internal/analytics/repo"
 	shorturlrepo "url_shortner_backend/internal/shorturl/repo"
 	"url_shortner_backend/pkg/geoip"
-	"url_shortner_backend/pkg/logger"
 	"url_shortner_backend/pkg/redis"
+
+	"github.com/rs/zerolog"
 )
 
 type AnalyticsSvc interface {
@@ -22,7 +23,7 @@ type AnalyticsSvc interface {
 }
 
 type AnalyticsSvcImp struct {
-	Logger       logger.Logger
+	Logger       zerolog.Logger
 	Repo         repo.AnalyticsRepository
 	ShortURLRepo shorturlrepo.ShortURLRepository
 	GeoIP        geoip.GeoIPLookup
@@ -30,7 +31,7 @@ type AnalyticsSvcImp struct {
 }
 
 type AnalyticsSvcParams struct {
-	Logger       logger.Logger
+	Logger       zerolog.Logger
 	Repo         repo.AnalyticsRepository
 	ShortURLRepo shorturlrepo.ShortURLRepository
 	GeoIP        geoip.GeoIPLookup

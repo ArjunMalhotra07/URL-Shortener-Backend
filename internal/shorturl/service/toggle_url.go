@@ -35,10 +35,10 @@ func (s *ShortURLSvcImp) ToggleURLActive(ctx context.Context, input ToggleURLInp
 	})
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			s.Logger.Info("toggle attempt on non-owned url", "code", input.Code, "owner_id", input.OwnerID)
+			s.Logger.Info().Str("code", input.Code).Str("owner_id", input.OwnerID).Msg("toggle attempt on non-owned url")
 			return ErrURLNotOwned
 		}
-		s.Logger.Error("failed to verify url ownership", "code", input.Code, "error", err)
+		s.Logger.Err(err).Str("code", input.Code).Msg("failed to verify url ownership")
 		return ErrURLToggle
 	}
 
@@ -48,13 +48,13 @@ func (s *ShortURLSvcImp) ToggleURLActive(ctx context.Context, input ToggleURLInp
 		OwnerID:   input.OwnerID,
 	})
 	if err != nil {
-		s.Logger.Error("failed to toggle url", "code", input.Code, "error", err)
+		s.Logger.Err(err).Str("code", input.Code).Msg("failed to toggle url")
 		return ErrURLToggle
 	}
 
 	// Invalidate cache
 	s.InvalidateURLCache(ctx, input.Code)
 
-	s.Logger.Info("url toggled", "code", input.Code, "owner_id", input.OwnerID)
+	s.Logger.Info().Str("code", input.Code).Str("owner_id", input.OwnerID).Msg("url toggled")
 	return nil
 }

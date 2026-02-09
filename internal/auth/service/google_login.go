@@ -19,27 +19,27 @@ func (s *AuthSvcImp) GoogleLogin(ctx context.Context, input GoogleLoginInput) (A
 		if input.AnonID != "" {
 			s.ShortURLSvc.TransferAnonymousURLsWithQuota(ctx, input.AnonID, userID)
 		}
-		s.Logger.Info("google user logged in", "email", email, "user_id", userID)
+		s.Logger.Info().Str("email", email).Str("user_id", userID).Msg("google user logged in")
 		return s.generateTokens(ctx, userID, email)
 	}
 
 	if err != pgx.ErrNoRows {
-		s.Logger.Error("failed to check google user", "google_id", input.GoogleID, "error", err)
+		s.Logger.Err(err).Str("google_id", input.GoogleID).Msg("failed to check google user")
 		return AuthOutput{}, ErrUserCreation
 	}
 
 	existingUser, err := s.Repo.GetUserByEmail(ctx, email)
 	if err == nil {
 		if existingUser.LoginType == 0 {
-			s.Logger.Info("google login attempt for email/password user", "email", email)
+			s.Logger.Info().Str("email", email).Msg("google login attempt for email/password user")
 			return AuthOutput{}, ErrEmailExistsWithPassword
 		}
-		s.Logger.Error("email exists with different google account", "email", email)
+		s.Logger.Error().Str("email", email).Msg("email exists with different google account")
 		return AuthOutput{}, ErrEmailExists
 	}
 
 	if err != pgx.ErrNoRows {
-		s.Logger.Error("failed to check existing user by email", "email", email, "error", err)
+		s.Logger.Err(err).Str("email", email).Msg("failed to check existing user by email")
 		return AuthOutput{}, ErrUserCreation
 	}
 
@@ -50,7 +50,7 @@ func (s *AuthSvcImp) GoogleLogin(ctx context.Context, input GoogleLoginInput) (A
 		AvatarUrl: pgtype.Text{String: input.AvatarURL, Valid: input.AvatarURL != ""},
 	})
 	if err != nil {
-		s.Logger.Error("failed to create google user", "email", email, "error", err)
+		s.Logger.Err(err).Str("email", email).Msg("failed to create google user")
 		return AuthOutput{}, ErrUserCreation
 	}
 
@@ -60,6 +60,6 @@ func (s *AuthSvcImp) GoogleLogin(ctx context.Context, input GoogleLoginInput) (A
 		s.ShortURLSvc.TransferAnonymousURLsWithQuota(ctx, input.AnonID, userID)
 	}
 
-	s.Logger.Info("google user created and logged in", "email", email, "user_id", userID)
+	s.Logger.Info().Str("email", email).Str("user_id", userID).Msg("google user created and logged in")
 	return s.generateTokens(ctx, userID, email)
 }

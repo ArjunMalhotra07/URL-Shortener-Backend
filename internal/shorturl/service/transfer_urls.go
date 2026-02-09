@@ -13,7 +13,7 @@ type TransferURLsInput struct {
 
 func (s *ShortURLSvcImp) TransferURLsToUser(ctx context.Context, input TransferURLsInput) error {
 	if input.AnonID == "" || input.UserID == "" {
-		s.Logger.Error("empty anon_id or user_id")
+		s.Logger.Error().Msg("empty anon_id or user_id")
 		return ErrInvalidOwner
 	}
 
@@ -22,11 +22,11 @@ func (s *ShortURLSvcImp) TransferURLsToUser(ctx context.Context, input TransferU
 		OwnerID_2: input.UserID,
 	})
 	if err != nil {
-		s.Logger.Error("failed to transfer urls", "anon_id", input.AnonID, "user_id", input.UserID, "error", err)
+		s.Logger.Err(err).Str("anon_id", input.AnonID).Str("user_id", input.UserID).Msg("failed to transfer urls")
 		return ErrURLTransfer
 	}
 
-	s.Logger.Info("urls transferred", "anon_id", input.AnonID, "user_id", input.UserID)
+	s.Logger.Info().Str("anon_id", input.AnonID).Str("user_id", input.UserID).Msg("urls transferred")
 	return nil
 }
 
@@ -40,13 +40,13 @@ func (s *ShortURLSvcImp) TransferAnonymousURLsWithQuota(ctx context.Context, ano
 	// Count how many URLs user has already created this month
 	monthCount, err := s.Repo.CountURLsCreatedThisMonth(ctx, userID)
 	if err != nil {
-		s.Logger.Error("failed to count user urls this month", "user_id", userID, "error", err)
+		s.Logger.Err(err).Str("user_id", userID).Msg("failed to count user urls this month")
 		return
 	}
 
 	remaining := s.Cfg.MonthlyQuotaUser - int(monthCount)
 	if remaining <= 0 {
-		s.Logger.Info("user at monthly quota, skipping anonymous url transfer", "user_id", userID, "month_count", monthCount)
+		s.Logger.Info().Str("user_id", userID).Int64("month_count", monthCount).Msg("user at monthly quota, skipping anonymous url transfer")
 		return
 	}
 
@@ -57,9 +57,9 @@ func (s *ShortURLSvcImp) TransferAnonymousURLsWithQuota(ctx context.Context, ano
 		Limit:     int32(remaining),
 	})
 	if err != nil {
-		s.Logger.Error("failed to transfer anonymous urls", "anon_id", anonID, "user_id", userID, "error", err)
+		s.Logger.Err(err).Str("anon_id", anonID).Str("user_id", userID).Msg("failed to transfer anonymous urls")
 		return
 	}
 
-	s.Logger.Info("transferred anonymous urls with quota limit", "anon_id", anonID, "user_id", userID, "max_transferred", remaining)
+	s.Logger.Info().Str("anon_id", anonID).Str("user_id", userID).Int("max_transferred", remaining).Msg("transferred anonymous urls with quota limit")
 }

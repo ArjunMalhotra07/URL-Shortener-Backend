@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/rs/zerolog"
 
 	db "url_shortner_backend/db/output"
 	"url_shortner_backend/internal/auth/repo"
 	shorturlsvc "url_shortner_backend/internal/shorturl/service"
 	"url_shortner_backend/pkg/jwt"
-	"url_shortner_backend/pkg/logger"
 )
 
 type AuthService interface {
@@ -27,24 +27,24 @@ type AuthService interface {
 }
 
 type MeOutput struct {
-	UserID              string
-	Email               string
-	Name                string
-	AvatarURL           string
-	Tier                string
-	SubscriptionEndsAt  *time.Time
+	UserID               string
+	Email                string
+	Name                 string
+	AvatarURL            string
+	Tier                 string
+	SubscriptionEndsAt   *time.Time
 	URLsCreatedThisMonth int64
-	URLsLimit           int
+	URLsLimit            int
 }
 
 type AuthSvcImp struct {
 	Repo        repo.AuthRepository
 	ShortURLSvc shorturlsvc.ShortURLSvc
 	JWT         *jwt.JWTManager
-	Logger      logger.Logger
+	Logger      zerolog.Logger
 }
 
-func NewAuthSvcImp(r repo.AuthRepository, shortURLSvc shorturlsvc.ShortURLSvc, jwtMgr *jwt.JWTManager, l logger.Logger) *AuthSvcImp {
+func NewAuthSvcImp(r repo.AuthRepository, shortURLSvc shorturlsvc.ShortURLSvc, jwtMgr *jwt.JWTManager, l zerolog.Logger) *AuthSvcImp {
 	return &AuthSvcImp{
 		Repo:        r,
 		ShortURLSvc: shortURLSvc,
@@ -85,13 +85,13 @@ type AuthOutput struct {
 func (s *AuthSvcImp) generateTokens(ctx context.Context, userID, email string) (AuthOutput, error) {
 	accessToken, accessExpiresAt, err := s.JWT.GenerateAccessToken(userID, email)
 	if err != nil {
-		s.Logger.Error("failed to generate access token", "error", err)
+		s.Logger.Err(err).Msg("failed to generate access token")
 		return AuthOutput{}, ErrTokenCreation
 	}
 
 	refreshToken, refreshExpiresAt, err := s.JWT.GenerateRefreshToken()
 	if err != nil {
-		s.Logger.Error("failed to generate refresh token", "error", err)
+		s.Logger.Err(err).Msg("failed to generate refresh token")
 		return AuthOutput{}, ErrTokenCreation
 	}
 
@@ -102,11 +102,11 @@ func (s *AuthSvcImp) generateTokens(ctx context.Context, userID, email string) (
 		ExpiresAt: pgtype.Timestamptz{Time: refreshExpiresAt, Valid: true},
 	})
 	if err != nil {
-		s.Logger.Error("failed to store refresh token", "error", err)
+		s.Logger.Err(err).Msg("failed to store refresh token")
 		return AuthOutput{}, ErrTokenCreation
 	}
 
-	s.Logger.Info("tokens generated", "user_id", userID)
+	s.Logger.Info().Str("user_id", userID).Msg("tokens generated")
 
 	return AuthOutput{
 		UserID:           userID,
