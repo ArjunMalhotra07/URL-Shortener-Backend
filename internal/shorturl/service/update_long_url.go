@@ -16,6 +16,7 @@ type UpdateLongURLInput struct {
 	ExpiresAt *time.Time // nil means no change, zero time means remove expiry
 	OwnerType string
 	OwnerID   string
+	Name      *string // nil means no change
 }
 
 type UpdateLongURLOutput struct {
@@ -25,6 +26,7 @@ type UpdateLongURLOutput struct {
 	ExpiresAt *time.Time
 	IsExpired bool
 	CreatedAt time.Time
+	Name      *string
 }
 
 func (s *ShortURLSvcImp) UpdateLongURL(ctx context.Context, input UpdateLongURLInput) (*UpdateLongURLOutput, error) {
@@ -80,7 +82,16 @@ func (s *ShortURLSvcImp) UpdateLongURL(ctx context.Context, input UpdateLongURLI
 		expiresAt = existingURL.ExpiresAt
 	}
 
-	updatedURL, err := s.Repo.UpdateLongURL(ctx, db.UpdateLongURLParams{Code: input.Code, OwnerType: ownerType, OwnerID: input.OwnerID, LongUrl: longURL, ExpiresAt: expiresAt})
+	// Determine name value for update
+	var name pgtype.Text
+	if input.Name != nil {
+		name = pgtype.Text{String: *input.Name, Valid: true}
+	} else {
+		// No change - keep existing value
+		name = existingURL.Name
+	}
+
+	updatedURL, err := s.Repo.UpdateLongURL(ctx, db.UpdateLongURLParams{Code: input.Code, OwnerType: ownerType, OwnerID: input.OwnerID, LongUrl: longURL, ExpiresAt: expiresAt, Name: name})
 	if err != nil {
 		s.Logger.Err(err).Str("code", input.Code).Msg("failed to update long url")
 		return nil, ErrURLUpdate
@@ -100,6 +111,10 @@ func (s *ShortURLSvcImp) UpdateLongURL(ctx context.Context, input UpdateLongURLI
 	if updatedURL.ExpiresAt.Valid {
 		output.ExpiresAt = &updatedURL.ExpiresAt.Time
 		output.IsExpired = updatedURL.ExpiresAt.Time.Before(time.Now())
+	}
+
+	if updatedURL.Name.Valid {
+		output.Name = &updatedURL.Name.String
 	}
 
 	return output, nil

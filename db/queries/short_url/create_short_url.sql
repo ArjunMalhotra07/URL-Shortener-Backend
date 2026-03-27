@@ -1,21 +1,21 @@
 -- name: CreateShortURL :one
-INSERT INTO short_urls (code, long_url, owner_type, owner_id, expires_at)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id, code, long_url, owner_type, owner_id, expires_at, created_at, updated_at;
+INSERT INTO short_urls (code, long_url, owner_type, owner_id, expires_at, name)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id, code, long_url, owner_type, owner_id, expires_at, created_at, updated_at, name;
 
 -- name: UpdateShortURLCode :one
 UPDATE short_urls
 SET code = $2
 WHERE id = $1
-RETURNING id, code, long_url, owner_type, owner_id, expires_at, created_at, updated_at;
+RETURNING id, code, long_url, owner_type, owner_id, expires_at, created_at, updated_at, name;
 
 -- name: GetShortURLByCode :one
-SELECT id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at
+SELECT id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at, name
 FROM short_urls
 WHERE code = $1 AND is_deleted = FALSE;
 
 -- name: GetShortURLsByOwner :many
-SELECT id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at
+SELECT id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at, name
 FROM short_urls
 WHERE owner_type = $1 AND owner_id = $2 AND is_deleted = FALSE
 ORDER BY created_at DESC
@@ -26,7 +26,7 @@ SELECT COUNT(*) FROM short_urls
 WHERE owner_type = $1 AND owner_id = $2 AND is_deleted = FALSE;
 
 -- name: GetURLByCodeAndOwner :one
-SELECT id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at
+SELECT id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at, name
 FROM short_urls
 WHERE code = $1 AND owner_type = $2 AND owner_id = $3 AND is_deleted = FALSE;
 
@@ -42,9 +42,9 @@ WHERE code = $1 AND owner_type = $2 AND owner_id = $3 AND is_deleted = FALSE;
 
 -- name: UpdateLongURL :one
 UPDATE short_urls
-SET long_url = $4, expires_at = $5
+SET long_url = $4, expires_at = $5, name = $6
 WHERE code = $1 AND owner_type = $2 AND owner_id = $3 AND is_deleted = FALSE
-RETURNING id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at;
+RETURNING id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at, name;
 
 -- name: TransferAnonymousURLsToUser :exec
 UPDATE short_urls

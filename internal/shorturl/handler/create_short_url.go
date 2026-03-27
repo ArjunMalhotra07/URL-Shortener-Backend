@@ -28,6 +28,7 @@ const (
 type CreateShortURLReq struct {
 	LongURL   string  `json:"long_url"`
 	ExpiresAt *string `json:"expires_at,omitempty"`
+	Name      *string `json:"name,omitempty"`
 }
 
 type CreateShortURLRes struct {
@@ -39,6 +40,7 @@ type CreateShortURLRes struct {
 	CreatedAt            string  `json:"created_at"`
 	URLsCreatedThisMonth int64   `json:"urls_created_this_month"`
 	URLsLimit            int     `json:"urls_limit"`
+	Name                 *string `json:"name,omitempty"`
 }
 
 type ErrorRes struct {
@@ -82,6 +84,7 @@ func (h *ShortURLHandler) CreateShortURL(c echo.Context) error {
 		OwnerType: ownerType,
 		OwnerID:   ownerID,
 		ExpiresAt: expiresAt,
+		Name:      req.Name,
 	})
 	if err != nil {
 		switch {
@@ -111,6 +114,7 @@ func (h *ShortURLHandler) CreateShortURL(c echo.Context) error {
 		CreatedAt:            output.CreatedAt.UTC().Format(time.RFC3339),
 		URLsCreatedThisMonth: output.URLsCreatedThisMonth,
 		URLsLimit:            output.URLsLimit,
+		Name:                 output.Name,
 	})
 }
 
