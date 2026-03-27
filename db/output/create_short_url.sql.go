@@ -43,9 +43,9 @@ func (q *Queries) CountURLsCreatedThisMonth(ctx context.Context, ownerID string)
 }
 
 const createShortURL = `-- name: CreateShortURL :one
-INSERT INTO short_urls (code, long_url, owner_type, owner_id, expires_at)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id, code, long_url, owner_type, owner_id, expires_at, created_at, updated_at
+INSERT INTO short_urls (code, long_url, owner_type, owner_id, expires_at, name)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id, code, long_url, owner_type, owner_id, expires_at, created_at, updated_at, name
 `
 
 type CreateShortURLParams struct {
@@ -54,6 +54,7 @@ type CreateShortURLParams struct {
 	OwnerType OwnerTypeEnum      `json:"owner_type"`
 	OwnerID   string             `json:"owner_id"`
 	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	Name      pgtype.Text        `json:"name"`
 }
 
 type CreateShortURLRow struct {
@@ -65,6 +66,7 @@ type CreateShortURLRow struct {
 	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	Name      pgtype.Text        `json:"name"`
 }
 
 func (q *Queries) CreateShortURL(ctx context.Context, arg CreateShortURLParams) (CreateShortURLRow, error) {
@@ -74,6 +76,7 @@ func (q *Queries) CreateShortURL(ctx context.Context, arg CreateShortURLParams) 
 		arg.OwnerType,
 		arg.OwnerID,
 		arg.ExpiresAt,
+		arg.Name,
 	)
 	var i CreateShortURLRow
 	err := row.Scan(
@@ -85,6 +88,7 @@ func (q *Queries) CreateShortURL(ctx context.Context, arg CreateShortURLParams) 
 		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Name,
 	)
 	return i, err
 }
@@ -99,7 +103,7 @@ func (q *Queries) DeleteClicksByShortURLID(ctx context.Context, shortUrlID int64
 }
 
 const getShortURLByCode = `-- name: GetShortURLByCode :one
-SELECT id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at
+SELECT id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at, name
 FROM short_urls
 WHERE code = $1 AND is_deleted = FALSE
 `
@@ -118,12 +122,13 @@ func (q *Queries) GetShortURLByCode(ctx context.Context, code string) (ShortUrl,
 		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Name,
 	)
 	return i, err
 }
 
 const getShortURLsByOwner = `-- name: GetShortURLsByOwner :many
-SELECT id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at
+SELECT id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at, name
 FROM short_urls
 WHERE owner_type = $1 AND owner_id = $2 AND is_deleted = FALSE
 ORDER BY created_at DESC
@@ -162,6 +167,7 @@ func (q *Queries) GetShortURLsByOwner(ctx context.Context, arg GetShortURLsByOwn
 			&i.ExpiresAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Name,
 		); err != nil {
 			return nil, err
 		}
@@ -174,7 +180,7 @@ func (q *Queries) GetShortURLsByOwner(ctx context.Context, arg GetShortURLsByOwn
 }
 
 const getURLByCodeAndOwner = `-- name: GetURLByCodeAndOwner :one
-SELECT id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at
+SELECT id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at, name
 FROM short_urls
 WHERE code = $1 AND owner_type = $2 AND owner_id = $3 AND is_deleted = FALSE
 `
@@ -199,6 +205,7 @@ func (q *Queries) GetURLByCodeAndOwner(ctx context.Context, arg GetURLByCodeAndO
 		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Name,
 	)
 	return i, err
 }
@@ -277,9 +284,9 @@ func (q *Queries) TransferAnonymousURLsToUserWithLimit(ctx context.Context, arg 
 
 const updateLongURL = `-- name: UpdateLongURL :one
 UPDATE short_urls
-SET long_url = $4, expires_at = $5
+SET long_url = $4, expires_at = $5, name = $6
 WHERE code = $1 AND owner_type = $2 AND owner_id = $3 AND is_deleted = FALSE
-RETURNING id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at
+RETURNING id, code, long_url, owner_type, owner_id, is_active, is_deleted, expires_at, created_at, updated_at, name
 `
 
 type UpdateLongURLParams struct {
@@ -288,6 +295,7 @@ type UpdateLongURLParams struct {
 	OwnerID   string             `json:"owner_id"`
 	LongUrl   string             `json:"long_url"`
 	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	Name      pgtype.Text        `json:"name"`
 }
 
 func (q *Queries) UpdateLongURL(ctx context.Context, arg UpdateLongURLParams) (ShortUrl, error) {
@@ -297,6 +305,7 @@ func (q *Queries) UpdateLongURL(ctx context.Context, arg UpdateLongURLParams) (S
 		arg.OwnerID,
 		arg.LongUrl,
 		arg.ExpiresAt,
+		arg.Name,
 	)
 	var i ShortUrl
 	err := row.Scan(
@@ -310,6 +319,7 @@ func (q *Queries) UpdateLongURL(ctx context.Context, arg UpdateLongURLParams) (S
 		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Name,
 	)
 	return i, err
 }
@@ -318,7 +328,7 @@ const updateShortURLCode = `-- name: UpdateShortURLCode :one
 UPDATE short_urls
 SET code = $2
 WHERE id = $1
-RETURNING id, code, long_url, owner_type, owner_id, expires_at, created_at, updated_at
+RETURNING id, code, long_url, owner_type, owner_id, expires_at, created_at, updated_at, name
 `
 
 type UpdateShortURLCodeParams struct {
@@ -335,6 +345,7 @@ type UpdateShortURLCodeRow struct {
 	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	Name      pgtype.Text        `json:"name"`
 }
 
 func (q *Queries) UpdateShortURLCode(ctx context.Context, arg UpdateShortURLCodeParams) (UpdateShortURLCodeRow, error) {
@@ -349,6 +360,7 @@ func (q *Queries) UpdateShortURLCode(ctx context.Context, arg UpdateShortURLCode
 		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Name,
 	)
 	return i, err
 }

@@ -18,6 +18,7 @@ type URLItem struct {
 	ExpiresAt *string `json:"expires_at,omitempty"`
 	IsExpired bool    `json:"is_expired"`
 	CreatedAt string  `json:"created_at"`
+	Name      *string `json:"name,omitempty"`
 }
 
 type GetMyURLsRes struct {
@@ -87,6 +88,7 @@ func (h *ShortURLHandler) GetMyURLs(c echo.Context) error {
 			ExpiresAt: expiresAt,
 			IsExpired: u.IsExpired,
 			CreatedAt: u.CreatedAt.UTC().Format(time.RFC3339),
+			Name:      u.Name,
 		}
 	}
 

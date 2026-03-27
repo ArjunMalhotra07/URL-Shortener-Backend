@@ -169,6 +169,7 @@ type ShortUrl struct {
 	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	Name      pgtype.Text        `json:"name"`
 }
 
 type User struct {

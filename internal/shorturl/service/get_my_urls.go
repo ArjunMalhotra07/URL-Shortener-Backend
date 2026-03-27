@@ -24,6 +24,7 @@ type ShortURLItem struct {
 	ExpiresAt *time.Time
 	IsExpired bool
 	CreatedAt time.Time
+	Name      *string
 }
 
 func (s *ShortURLSvcImp) GetMyURLs(ctx context.Context, input GetMyURLsInput) (GetMyURLsOutput, error) {
@@ -66,6 +67,10 @@ func (s *ShortURLSvcImp) GetMyURLs(ctx context.Context, input GetMyURLsInput) (G
 			expiresAt = &u.ExpiresAt.Time
 			isExpired = u.ExpiresAt.Time.Before(now)
 		}
+		var name *string
+		if u.Name.Valid {
+			name = &u.Name.String
+		}
 		items[i] = ShortURLItem{
 			ID:        u.ID,
 			Code:      u.Code,
@@ -74,6 +79,7 @@ func (s *ShortURLSvcImp) GetMyURLs(ctx context.Context, input GetMyURLsInput) (G
 			ExpiresAt: expiresAt,
 			IsExpired: isExpired,
 			CreatedAt: u.CreatedAt.Time,
+			Name:      name,
 		}
 	}
 

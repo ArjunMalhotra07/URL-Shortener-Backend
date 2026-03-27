@@ -14,6 +14,7 @@ type CreateShortURLInput struct {
 	OwnerType string
 	OwnerID   string
 	ExpiresAt *time.Time
+	Name      *string
 }
 type CreateShortURLOutput struct {
 	ID                   int64
@@ -25,6 +26,7 @@ type CreateShortURLOutput struct {
 	CreatedAt            time.Time
 	URLsCreatedThisMonth int64
 	URLsLimit            int
+	Name                 *string
 }
 
 func (s *ShortURLSvcImp) CreateShortURL(ctx context.Context, input CreateShortURLInput) (CreateShortURLOutput, error) {
@@ -65,6 +67,11 @@ func (s *ShortURLSvcImp) CreateShortURL(ctx context.Context, input CreateShortUR
 		expiresAt = pgtype.Timestamptz{Time: *input.ExpiresAt, Valid: true}
 	}
 
+	var name pgtype.Text
+	if input.Name != nil {
+		name = pgtype.Text{String: *input.Name, Valid: true}
+	}
+
 	tempCode := "temp"
 	row, err := s.Repo.CreateShortURL(ctx, db.CreateShortURLParams{
 		Code:      tempCode,
@@ -72,6 +79,7 @@ func (s *ShortURLSvcImp) CreateShortURL(ctx context.Context, input CreateShortUR
 		OwnerType: ownerType,
 		OwnerID:   input.OwnerID,
 		ExpiresAt: expiresAt,
+		Name:      name,
 	})
 	if err != nil {
 		s.Logger.Err(err).Msg("failed to create short url")
@@ -96,6 +104,11 @@ func (s *ShortURLSvcImp) CreateShortURL(ctx context.Context, input CreateShortUR
 		outputExpiresAt = &updatedRow.ExpiresAt.Time
 	}
 
+	var outputName *string
+	if updatedRow.Name.Valid {
+		outputName = &updatedRow.Name.String
+	}
+
 	return CreateShortURLOutput{
 		ID:                   updatedRow.ID,
 		Code:                 updatedRow.Code,
@@ -106,5 +119,6 @@ func (s *ShortURLSvcImp) CreateShortURL(ctx context.Context, input CreateShortUR
 		CreatedAt:            updatedRow.CreatedAt.Time,
 		URLsCreatedThisMonth: monthCount + 1, // +1 for the one we just created
 		URLsLimit:            quota,
+		Name:                 outputName,
 	}, nil
 }

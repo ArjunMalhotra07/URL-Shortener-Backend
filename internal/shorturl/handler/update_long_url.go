@@ -13,6 +13,7 @@ import (
 type UpdateLongURLReq struct {
 	LongURL   string  `json:"long_url"`
 	ExpiresAt *string `json:"expires_at"` // ISO 8601 timestamp, null to remove expiry
+	Name      *string `json:"name,omitempty"`
 }
 
 type UpdateLongURLRes struct {
@@ -22,6 +23,7 @@ type UpdateLongURLRes struct {
 	ExpiresAt *string `json:"expires_at,omitempty"`
 	IsExpired bool    `json:"is_expired"`
 	CreatedAt string  `json:"created_at"`
+	Name      *string `json:"name,omitempty"`
 }
 
 func (h *ShortURLHandler) UpdateLongURL(c echo.Context) error {
@@ -83,6 +85,7 @@ func (h *ShortURLHandler) UpdateLongURL(c echo.Context) error {
 		ExpiresAt: expiresAt,
 		OwnerType: ownerType,
 		OwnerID:   ownerID,
+		Name:      req.Name,
 	})
 	if err != nil {
 		switch {
@@ -104,6 +107,7 @@ func (h *ShortURLHandler) UpdateLongURL(c echo.Context) error {
 		IsActive:  output.IsActive,
 		IsExpired: output.IsExpired,
 		CreatedAt: output.CreatedAt.UTC().Format(time.RFC3339),
+		Name:      output.Name,
 	}
 
 	if output.ExpiresAt != nil {
