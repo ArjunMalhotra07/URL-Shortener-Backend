@@ -82,14 +82,17 @@ type ListUsersInput struct {
 }
 
 type UserRow struct {
-	ID          string `json:"id"`
-	Email       string `json:"email"`
-	Name        string `json:"name"`
-	Tier        string `json:"tier"`
-	LoginType   int16  `json:"login_type"`
-	CreatedAt   string `json:"created_at"`
-	UrlCount    int64  `json:"url_count"`
-	TotalClicks int64  `json:"total_clicks"`
+	ID            string `json:"id"`
+	Email         string `json:"email"`
+	Name          string `json:"name"`
+	Tier          string `json:"tier"`
+	LoginType     int16  `json:"login_type"`
+	CreatedAt     string `json:"created_at"`
+	UrlCount      int64  `json:"url_count"`
+	ActiveCount   int64  `json:"active_count"`
+	InactiveCount int64  `json:"inactive_count"`
+	DeletedCount  int64  `json:"deleted_count"`
+	TotalClicks   int64  `json:"total_clicks"`
 }
 
 type ListUsersOutput struct {
@@ -123,14 +126,17 @@ func (s *AdminSvcImp) ListUsers(ctx context.Context, input ListUsersInput) (List
 	rows := make([]UserRow, len(users))
 	for i, u := range users {
 		rows[i] = UserRow{
-			ID:          uuidToString(u.ID),
-			Email:       u.Email,
-			Name:        textToString(u.Name),
-			Tier:        string(u.Tier),
-			LoginType:   u.LoginType,
-			CreatedAt:   u.CreatedAt.Time.UTC().Format(time.RFC3339),
-			UrlCount:    u.UrlCount,
-			TotalClicks: u.TotalClicks,
+			ID:            uuidToString(u.ID),
+			Email:         u.Email,
+			Name:          textToString(u.Name),
+			Tier:          string(u.Tier),
+			LoginType:     u.LoginType,
+			CreatedAt:     u.CreatedAt.Time.UTC().Format(time.RFC3339),
+			UrlCount:      u.UrlCount,
+			ActiveCount:   u.ActiveCount,
+			InactiveCount: u.InactiveCount,
+			DeletedCount:  u.DeletedCount,
+			TotalClicks:   u.TotalClicks,
 		}
 	}
 
@@ -215,10 +221,13 @@ type TierCount struct {
 }
 
 type PlatformStatsOutput struct {
-	TotalUsers  int64       `json:"total_users"`
-	TotalUrls   int64       `json:"total_urls"`
-	TotalClicks int64       `json:"total_clicks"`
-	UsersByTier []TierCount `json:"users_by_tier"`
+	TotalUsers   int64       `json:"total_users"`
+	TotalUrls    int64       `json:"total_urls"`
+	ActiveUrls   int64       `json:"active_urls"`
+	InactiveUrls int64       `json:"inactive_urls"`
+	DeletedUrls  int64       `json:"deleted_urls"`
+	TotalClicks  int64       `json:"total_clicks"`
+	UsersByTier  []TierCount `json:"users_by_tier"`
 }
 
 func (s *AdminSvcImp) GetPlatformStats(ctx context.Context) (PlatformStatsOutput, error) {
@@ -243,10 +252,13 @@ func (s *AdminSvcImp) GetPlatformStats(ctx context.Context) (PlatformStatsOutput
 	}
 
 	return PlatformStatsOutput{
-		TotalUsers:  stats.TotalUsers,
-		TotalUrls:   stats.TotalUrls,
-		TotalClicks: stats.TotalClicks,
-		UsersByTier: tierCounts,
+		TotalUsers:   stats.TotalUsers,
+		TotalUrls:    stats.TotalUrls,
+		ActiveUrls:   stats.ActiveUrls,
+		InactiveUrls: stats.InactiveUrls,
+		DeletedUrls:  stats.DeletedUrls,
+		TotalClicks:  stats.TotalClicks,
+		UsersByTier:  tierCounts,
 	}, nil
 }
 

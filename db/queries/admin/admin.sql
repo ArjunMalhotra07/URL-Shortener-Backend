@@ -7,9 +7,12 @@ SELECT
     u.login_type,
     u.created_at,
     COUNT(DISTINCT s.id)::bigint AS url_count,
+    COUNT(DISTINCT s.id) FILTER (WHERE s.is_deleted = false AND s.is_active = true)::bigint AS active_count,
+    COUNT(DISTINCT s.id) FILTER (WHERE s.is_deleted = false AND s.is_active = false)::bigint AS inactive_count,
+    COUNT(DISTINCT s.id) FILTER (WHERE s.is_deleted = true)::bigint AS deleted_count,
     COALESCE(SUM(click_counts.total), 0)::bigint AS total_clicks
 FROM users u
-LEFT JOIN short_urls s ON s.owner_type = 'user' AND s.owner_id = u.id::text AND s.is_deleted = false
+LEFT JOIN short_urls s ON s.owner_type = 'user' AND s.owner_id = u.id::text
 LEFT JOIN (
     SELECT short_url_id, COUNT(*)::bigint AS total
     FROM clicks
@@ -47,7 +50,10 @@ WHERE owner_type = 'user' AND owner_id = $1;
 -- name: AdminGetPlatformStats :one
 SELECT
     (SELECT COUNT(*)::bigint FROM users) AS total_users,
-    (SELECT COUNT(*)::bigint FROM short_urls WHERE is_deleted = false) AS total_urls,
+    (SELECT COUNT(*)::bigint FROM short_urls) AS total_urls,
+    (SELECT COUNT(*)::bigint FROM short_urls WHERE is_deleted = false AND is_active = true) AS active_urls,
+    (SELECT COUNT(*)::bigint FROM short_urls WHERE is_deleted = false AND is_active = false) AS inactive_urls,
+    (SELECT COUNT(*)::bigint FROM short_urls WHERE is_deleted = true) AS deleted_urls,
     (SELECT COUNT(*)::bigint FROM clicks) AS total_clicks;
 
 -- name: AdminGetUsersByTier :many

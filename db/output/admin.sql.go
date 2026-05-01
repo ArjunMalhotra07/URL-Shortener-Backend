@@ -37,20 +37,33 @@ func (q *Queries) AdminCountUsers(ctx context.Context) (int64, error) {
 const adminGetPlatformStats = `-- name: AdminGetPlatformStats :one
 SELECT
     (SELECT COUNT(*)::bigint FROM users) AS total_users,
-    (SELECT COUNT(*)::bigint FROM short_urls WHERE is_deleted = false) AS total_urls,
+    (SELECT COUNT(*)::bigint FROM short_urls) AS total_urls,
+    (SELECT COUNT(*)::bigint FROM short_urls WHERE is_deleted = false AND is_active = true) AS active_urls,
+    (SELECT COUNT(*)::bigint FROM short_urls WHERE is_deleted = false AND is_active = false) AS inactive_urls,
+    (SELECT COUNT(*)::bigint FROM short_urls WHERE is_deleted = true) AS deleted_urls,
     (SELECT COUNT(*)::bigint FROM clicks) AS total_clicks
 `
 
 type AdminGetPlatformStatsRow struct {
-	TotalUsers  int64 `json:"total_users"`
-	TotalUrls   int64 `json:"total_urls"`
-	TotalClicks int64 `json:"total_clicks"`
+	TotalUsers   int64 `json:"total_users"`
+	TotalUrls    int64 `json:"total_urls"`
+	ActiveUrls   int64 `json:"active_urls"`
+	InactiveUrls int64 `json:"inactive_urls"`
+	DeletedUrls  int64 `json:"deleted_urls"`
+	TotalClicks  int64 `json:"total_clicks"`
 }
 
 func (q *Queries) AdminGetPlatformStats(ctx context.Context) (AdminGetPlatformStatsRow, error) {
 	row := q.db.QueryRow(ctx, adminGetPlatformStats)
 	var i AdminGetPlatformStatsRow
-	err := row.Scan(&i.TotalUsers, &i.TotalUrls, &i.TotalClicks)
+	err := row.Scan(
+		&i.TotalUsers,
+		&i.TotalUrls,
+		&i.ActiveUrls,
+		&i.InactiveUrls,
+		&i.DeletedUrls,
+		&i.TotalClicks,
+	)
 	return i, err
 }
 
@@ -161,9 +174,12 @@ SELECT
     u.login_type,
     u.created_at,
     COUNT(DISTINCT s.id)::bigint AS url_count,
+    COUNT(DISTINCT s.id) FILTER (WHERE s.is_deleted = false AND s.is_active = true)::bigint AS active_count,
+    COUNT(DISTINCT s.id) FILTER (WHERE s.is_deleted = false AND s.is_active = false)::bigint AS inactive_count,
+    COUNT(DISTINCT s.id) FILTER (WHERE s.is_deleted = true)::bigint AS deleted_count,
     COALESCE(SUM(click_counts.total), 0)::bigint AS total_clicks
 FROM users u
-LEFT JOIN short_urls s ON s.owner_type = 'user' AND s.owner_id = u.id::text AND s.is_deleted = false
+LEFT JOIN short_urls s ON s.owner_type = 'user' AND s.owner_id = u.id::text
 LEFT JOIN (
     SELECT short_url_id, COUNT(*)::bigint AS total
     FROM clicks
@@ -180,14 +196,17 @@ type AdminListUsersParams struct {
 }
 
 type AdminListUsersRow struct {
-	ID          pgtype.UUID        `json:"id"`
-	Email       string             `json:"email"`
-	Name        pgtype.Text        `json:"name"`
-	Tier        SubscriptionTier   `json:"tier"`
-	LoginType   int16              `json:"login_type"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UrlCount    int64              `json:"url_count"`
-	TotalClicks int64              `json:"total_clicks"`
+	ID            pgtype.UUID        `json:"id"`
+	Email         string             `json:"email"`
+	Name          pgtype.Text        `json:"name"`
+	Tier          SubscriptionTier   `json:"tier"`
+	LoginType     int16              `json:"login_type"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UrlCount      int64              `json:"url_count"`
+	ActiveCount   int64              `json:"active_count"`
+	InactiveCount int64              `json:"inactive_count"`
+	DeletedCount  int64              `json:"deleted_count"`
+	TotalClicks   int64              `json:"total_clicks"`
 }
 
 func (q *Queries) AdminListUsers(ctx context.Context, arg AdminListUsersParams) ([]AdminListUsersRow, error) {
@@ -207,6 +226,9 @@ func (q *Queries) AdminListUsers(ctx context.Context, arg AdminListUsersParams) 
 			&i.LoginType,
 			&i.CreatedAt,
 			&i.UrlCount,
+			&i.ActiveCount,
+			&i.InactiveCount,
+			&i.DeletedCount,
 			&i.TotalClicks,
 		); err != nil {
 			return nil, err
