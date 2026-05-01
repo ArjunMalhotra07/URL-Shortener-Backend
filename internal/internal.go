@@ -2,6 +2,9 @@ package internal
 
 import (
 	db "url_shortner_backend/db/output"
+	adminhandler "url_shortner_backend/internal/admin/handler"
+	adminrepo "url_shortner_backend/internal/admin/repo"
+	adminservice "url_shortner_backend/internal/admin/service"
 	analyticshandler "url_shortner_backend/internal/analytics/handler"
 	analyticsrepo "url_shortner_backend/internal/analytics/repo"
 	analyticsservice "url_shortner_backend/internal/analytics/service"
@@ -23,6 +26,7 @@ type AppServices struct {
 	ShortURL  handler.ShortURLHandler
 	Auth      authhandler.AuthHandler
 	Analytics analyticshandler.AnalyticsHandler
+	Admin     adminhandler.AdminHandler
 }
 
 // AnalyticsSvc exposes the analytics service for use in redirect recording
@@ -68,9 +72,15 @@ func GetAppServices(p AppServicesParams) *AppServices {
 	// Set analytics service on shortURL handler for click recording
 	shortURLHandler.AnalyticsSvc = analyticsSvc
 
+	// Admin
+	admRepo := adminrepo.NewAdminRepoImp(adminrepo.AdminRepoParams{Queries: p.Queries})
+	admSvc := adminservice.NewAdminSvcImp(admRepo, p.JWT, p.Cfg, p.Logger)
+	admHandler := adminhandler.NewAdminHandler(admSvc)
+
 	return &AppServices{
 		ShortURL:  *shortURLHandler,
 		Auth:      *authHandler,
 		Analytics: *analyticsHandler,
+		Admin:     *admHandler,
 	}
 }

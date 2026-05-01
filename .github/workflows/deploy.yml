@@ -61,6 +61,8 @@ jobs:
             -e REDIS_ADDR="${{ secrets.REDIS_ADDR }}" \
             -e REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD }}" \
             -e REDIS_DB="${{ secrets.REDIS_DB }}" \
+            -e ADMIN_ID="${{ secrets.ADMIN_ID }}" \
+            -e ADMIN_TOTP_SECRET="${{ secrets.ADMIN_TOTP_SECRET }}" \
             -e GEOIP_DB_PATH=/app/data/geoip/GeoLite2-City.mmdb \
             ${{ env.IMAGE_NAME }}:${{ inputs.image_tag || 'latest' }}
 

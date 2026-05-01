@@ -105,6 +105,14 @@ func (s *EchoServer) setupRoutes() {
 	analytics.GET("/:code/geo", s.svcs.Analytics.GetGeo)
 	analytics.GET("/:code/devices", s.svcs.Analytics.GetDevices)
 
+	// Admin routes
+	admin := apiV1.Group("/admin")
+	admin.POST("/login", s.svcs.Admin.Login)
+	adminProtected := admin.Group("", authmw.AdminAuthMiddleware(s.jwt))
+	adminProtected.GET("/users", s.svcs.Admin.ListUsers)
+	adminProtected.GET("/users/:id/urls", s.svcs.Admin.GetUserURLs)
+	adminProtected.GET("/stats", s.svcs.Admin.GetStats)
+
 	// Redirect route at root level: example.com/:code (no rate limit for fast redirects)
 	s.e.GET("/:code", s.svcs.ShortURL.GetOriginalURL)
 }
