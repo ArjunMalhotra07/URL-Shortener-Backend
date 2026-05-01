@@ -5,6 +5,7 @@ sql:
       - "db/queries/short_url"
       - "db/queries/auth"
       - "db/queries/analytics"
+      - "db/queries/admin"
     schema: "db/migrations"
     gen:
       go:

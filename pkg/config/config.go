@@ -38,6 +38,10 @@ type Config struct {
 	// GeoIP settings
 	GeoIPDBPath string `env:"GEOIP_DB_PATH" envDefault:"./data/geoip/GeoLite2-City.mmdb"`
 
+	// Admin portal
+	AdminID         string `env:"ADMIN_ID" envDefault:""`
+	AdminTOTPSecret string `env:"ADMIN_TOTP_SECRET" envDefault:""`
+
 	// Debug/Testing
 	UseDummyAnalytics bool `env:"USE_DUMMY_ANALYTICS" envDefault:"false"`
 }
