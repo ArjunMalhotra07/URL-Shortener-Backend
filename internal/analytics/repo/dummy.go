@@ -104,6 +104,10 @@ func (r *AnalyticsRepoDummy) CountClicksByShortURLID(ctx context.Context, shortU
 	return 1247, nil
 }
 
+func (r *AnalyticsRepoDummy) CountClicksByShortURLIDRange(ctx context.Context, params db.CountClicksByShortURLIDRangeParams) (int64, error) {
+	return 1247, nil
+}
+
 func (r *AnalyticsRepoDummy) CountUniqueClicksByShortURLID(ctx context.Context, shortUrlID int64) (int64, error) {
 	return 892, nil
 }

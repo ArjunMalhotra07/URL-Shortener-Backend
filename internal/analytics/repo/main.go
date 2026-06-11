@@ -10,6 +10,7 @@ type AnalyticsRepository interface {
 	InsertClick(ctx context.Context, params db.InsertClickParams) error
 	GetClicksByShortURLID(ctx context.Context, params db.GetClicksByShortURLIDParams) ([]db.Click, error)
 	CountClicksByShortURLID(ctx context.Context, shortUrlID int64) (int64, error)
+	CountClicksByShortURLIDRange(ctx context.Context, params db.CountClicksByShortURLIDRangeParams) (int64, error)
 	CountUniqueClicksByShortURLID(ctx context.Context, shortUrlID int64) (int64, error)
 	GetClicksByCountry(ctx context.Context, params db.GetClicksByCountryParams) ([]db.GetClicksByCountryRow, error)
 	GetClicksByCity(ctx context.Context, params db.GetClicksByCityParams) ([]db.GetClicksByCityRow, error)
@@ -48,6 +49,10 @@ func (r *AnalyticsRepoImp) GetClicksByShortURLID(ctx context.Context, params db.
 
 func (r *AnalyticsRepoImp) CountClicksByShortURLID(ctx context.Context, shortUrlID int64) (int64, error) {
 	return r.Queries.CountClicksByShortURLID(ctx, shortUrlID)
+}
+
+func (r *AnalyticsRepoImp) CountClicksByShortURLIDRange(ctx context.Context, params db.CountClicksByShortURLIDRangeParams) (int64, error) {
+	return r.Queries.CountClicksByShortURLIDRange(ctx, params)
 }
 
 func (r *AnalyticsRepoImp) CountUniqueClicksByShortURLID(ctx context.Context, shortUrlID int64) (int64, error) {

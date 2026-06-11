@@ -64,7 +64,11 @@ func (s *AnalyticsSvcImp) GetClicks(ctx context.Context, input GetClicksInput) (
 		return GetClicksOutput{}, ErrAnalyticsFetch
 	}
 
-	totalCount, err := s.Repo.CountClicksByShortURLID(ctx, shortURL.ID)
+	totalCount, err := s.Repo.CountClicksByShortURLIDRange(ctx, db.CountClicksByShortURLIDRangeParams{
+		ShortUrlID:  shortURL.ID,
+		ClickedAt:   pgtype.Timestamptz{Time: getStartTime(input.Start), Valid: true},
+		ClickedAt_2: pgtype.Timestamptz{Time: input.End, Valid: true},
+	})
 	if err != nil {
 		s.Logger.Err(err).Msg("failed to count clicks")
 		return GetClicksOutput{}, ErrAnalyticsFetch
