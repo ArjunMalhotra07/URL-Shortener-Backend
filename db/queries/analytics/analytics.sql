@@ -3,7 +3,7 @@ INSERT INTO clicks (short_url_id, ip_hash, country, city, region, browser, os, d
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15);
 
 -- name: GetClicksByShortURLID :many
-SELECT * FROM clicks WHERE short_url_id = $1 ORDER BY clicked_at DESC LIMIT $2 OFFSET $3;
+SELECT * FROM clicks WHERE short_url_id = $1 AND clicked_at >= $4 AND clicked_at <= $5 ORDER BY clicked_at DESC LIMIT $2 OFFSET $3;
 
 -- name: CountClicksByShortURLID :one
 SELECT COUNT(*) FROM clicks WHERE short_url_id = $1;
@@ -12,31 +12,31 @@ SELECT COUNT(*) FROM clicks WHERE short_url_id = $1;
 SELECT COUNT(*) FROM clicks WHERE short_url_id = $1 AND is_unique = TRUE;
 
 -- name: GetClicksByCountry :many
-SELECT country, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 GROUP BY country ORDER BY clicks DESC LIMIT $3;
+SELECT country, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND clicked_at <= $3 GROUP BY country ORDER BY clicks DESC LIMIT $4;
 
 -- name: GetClicksByCity :many
-SELECT city, country, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND city IS NOT NULL GROUP BY city, country ORDER BY clicks DESC LIMIT $3;
+SELECT city, country, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND clicked_at <= $3 AND city IS NOT NULL GROUP BY city, country ORDER BY clicks DESC LIMIT $4;
 
 -- name: GetClicksByDevice :many
-SELECT device_type, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 GROUP BY device_type;
+SELECT device_type, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND clicked_at <= $3 GROUP BY device_type;
 
 -- name: GetClicksByBrowser :many
-SELECT browser, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 GROUP BY browser ORDER BY clicks DESC;
+SELECT browser, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND clicked_at <= $3 GROUP BY browser ORDER BY clicks DESC;
 
 -- name: GetClicksByOS :many
-SELECT os, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 GROUP BY os ORDER BY clicks DESC;
+SELECT os, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND clicked_at <= $3 GROUP BY os ORDER BY clicks DESC;
 
 -- name: GetClicksTimeseries :many
-SELECT DATE_TRUNC('day', clicked_at)::TIMESTAMPTZ as date, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 GROUP BY DATE_TRUNC('day', clicked_at) ORDER BY date;
+SELECT DATE_TRUNC('day', clicked_at)::TIMESTAMPTZ as date, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND clicked_at <= $3 GROUP BY DATE_TRUNC('day', clicked_at) ORDER BY date;
 
 -- name: GetClicksTimeseriesHourly :many
-SELECT DATE_TRUNC('hour', clicked_at)::TIMESTAMPTZ as date, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 GROUP BY DATE_TRUNC('hour', clicked_at) ORDER BY date;
+SELECT DATE_TRUNC('hour', clicked_at)::TIMESTAMPTZ as date, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND clicked_at <= $3 GROUP BY DATE_TRUNC('hour', clicked_at) ORDER BY date;
 
 -- name: GetTopReferrers :many
-SELECT referrer_domain, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND referrer_domain IS NOT NULL GROUP BY referrer_domain ORDER BY clicks DESC LIMIT $3;
+SELECT referrer_domain, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND clicked_at <= $3 AND referrer_domain IS NOT NULL GROUP BY referrer_domain ORDER BY clicks DESC LIMIT $4;
 
 -- name: GetTopCampaigns :many
-SELECT utm_campaign, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND utm_campaign IS NOT NULL GROUP BY utm_campaign ORDER BY clicks DESC LIMIT $3;
+SELECT utm_campaign, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND clicked_at <= $3 AND utm_campaign IS NOT NULL GROUP BY utm_campaign ORDER BY clicks DESC LIMIT $4;
 
 -- name: GetClicksSummary :one
 SELECT
@@ -44,7 +44,7 @@ SELECT
     COUNT(*) FILTER (WHERE is_unique = TRUE) as unique_clicks,
     COUNT(*) FILTER (WHERE is_bot = TRUE) as bot_clicks
 FROM clicks
-WHERE short_url_id = $1 AND clicked_at >= $2;
+WHERE short_url_id = $1 AND clicked_at >= $2 AND clicked_at <= $3;
 
 -- name: GetClicksSummaryAllTime :one
 SELECT

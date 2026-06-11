@@ -34,12 +34,13 @@ func (q *Queries) CountUniqueClicksByShortURLID(ctx context.Context, shortUrlID 
 }
 
 const getClicksByBrowser = `-- name: GetClicksByBrowser :many
-SELECT browser, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 GROUP BY browser ORDER BY clicks DESC
+SELECT browser, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND clicked_at <= $3 GROUP BY browser ORDER BY clicks DESC
 `
 
 type GetClicksByBrowserParams struct {
-	ShortUrlID int64              `json:"short_url_id"`
-	ClickedAt  pgtype.Timestamptz `json:"clicked_at"`
+	ShortUrlID  int64              `json:"short_url_id"`
+	ClickedAt   pgtype.Timestamptz `json:"clicked_at"`
+	ClickedAt_2 pgtype.Timestamptz `json:"clicked_at_2"`
 }
 
 type GetClicksByBrowserRow struct {
@@ -48,7 +49,7 @@ type GetClicksByBrowserRow struct {
 }
 
 func (q *Queries) GetClicksByBrowser(ctx context.Context, arg GetClicksByBrowserParams) ([]GetClicksByBrowserRow, error) {
-	rows, err := q.db.Query(ctx, getClicksByBrowser, arg.ShortUrlID, arg.ClickedAt)
+	rows, err := q.db.Query(ctx, getClicksByBrowser, arg.ShortUrlID, arg.ClickedAt, arg.ClickedAt_2)
 	if err != nil {
 		return nil, err
 	}
@@ -68,13 +69,14 @@ func (q *Queries) GetClicksByBrowser(ctx context.Context, arg GetClicksByBrowser
 }
 
 const getClicksByCity = `-- name: GetClicksByCity :many
-SELECT city, country, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND city IS NOT NULL GROUP BY city, country ORDER BY clicks DESC LIMIT $3
+SELECT city, country, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND clicked_at <= $3 AND city IS NOT NULL GROUP BY city, country ORDER BY clicks DESC LIMIT $4
 `
 
 type GetClicksByCityParams struct {
-	ShortUrlID int64              `json:"short_url_id"`
-	ClickedAt  pgtype.Timestamptz `json:"clicked_at"`
-	Limit      int32              `json:"limit"`
+	ShortUrlID  int64              `json:"short_url_id"`
+	ClickedAt   pgtype.Timestamptz `json:"clicked_at"`
+	ClickedAt_2 pgtype.Timestamptz `json:"clicked_at_2"`
+	Limit       int32              `json:"limit"`
 }
 
 type GetClicksByCityRow struct {
@@ -84,7 +86,12 @@ type GetClicksByCityRow struct {
 }
 
 func (q *Queries) GetClicksByCity(ctx context.Context, arg GetClicksByCityParams) ([]GetClicksByCityRow, error) {
-	rows, err := q.db.Query(ctx, getClicksByCity, arg.ShortUrlID, arg.ClickedAt, arg.Limit)
+	rows, err := q.db.Query(ctx, getClicksByCity,
+		arg.ShortUrlID,
+		arg.ClickedAt,
+		arg.ClickedAt_2,
+		arg.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -104,13 +111,14 @@ func (q *Queries) GetClicksByCity(ctx context.Context, arg GetClicksByCityParams
 }
 
 const getClicksByCountry = `-- name: GetClicksByCountry :many
-SELECT country, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 GROUP BY country ORDER BY clicks DESC LIMIT $3
+SELECT country, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND clicked_at <= $3 GROUP BY country ORDER BY clicks DESC LIMIT $4
 `
 
 type GetClicksByCountryParams struct {
-	ShortUrlID int64              `json:"short_url_id"`
-	ClickedAt  pgtype.Timestamptz `json:"clicked_at"`
-	Limit      int32              `json:"limit"`
+	ShortUrlID  int64              `json:"short_url_id"`
+	ClickedAt   pgtype.Timestamptz `json:"clicked_at"`
+	ClickedAt_2 pgtype.Timestamptz `json:"clicked_at_2"`
+	Limit       int32              `json:"limit"`
 }
 
 type GetClicksByCountryRow struct {
@@ -119,7 +127,12 @@ type GetClicksByCountryRow struct {
 }
 
 func (q *Queries) GetClicksByCountry(ctx context.Context, arg GetClicksByCountryParams) ([]GetClicksByCountryRow, error) {
-	rows, err := q.db.Query(ctx, getClicksByCountry, arg.ShortUrlID, arg.ClickedAt, arg.Limit)
+	rows, err := q.db.Query(ctx, getClicksByCountry,
+		arg.ShortUrlID,
+		arg.ClickedAt,
+		arg.ClickedAt_2,
+		arg.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -139,12 +152,13 @@ func (q *Queries) GetClicksByCountry(ctx context.Context, arg GetClicksByCountry
 }
 
 const getClicksByDevice = `-- name: GetClicksByDevice :many
-SELECT device_type, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 GROUP BY device_type
+SELECT device_type, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND clicked_at <= $3 GROUP BY device_type
 `
 
 type GetClicksByDeviceParams struct {
-	ShortUrlID int64              `json:"short_url_id"`
-	ClickedAt  pgtype.Timestamptz `json:"clicked_at"`
+	ShortUrlID  int64              `json:"short_url_id"`
+	ClickedAt   pgtype.Timestamptz `json:"clicked_at"`
+	ClickedAt_2 pgtype.Timestamptz `json:"clicked_at_2"`
 }
 
 type GetClicksByDeviceRow struct {
@@ -153,7 +167,7 @@ type GetClicksByDeviceRow struct {
 }
 
 func (q *Queries) GetClicksByDevice(ctx context.Context, arg GetClicksByDeviceParams) ([]GetClicksByDeviceRow, error) {
-	rows, err := q.db.Query(ctx, getClicksByDevice, arg.ShortUrlID, arg.ClickedAt)
+	rows, err := q.db.Query(ctx, getClicksByDevice, arg.ShortUrlID, arg.ClickedAt, arg.ClickedAt_2)
 	if err != nil {
 		return nil, err
 	}
@@ -173,12 +187,13 @@ func (q *Queries) GetClicksByDevice(ctx context.Context, arg GetClicksByDevicePa
 }
 
 const getClicksByOS = `-- name: GetClicksByOS :many
-SELECT os, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 GROUP BY os ORDER BY clicks DESC
+SELECT os, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND clicked_at <= $3 GROUP BY os ORDER BY clicks DESC
 `
 
 type GetClicksByOSParams struct {
-	ShortUrlID int64              `json:"short_url_id"`
-	ClickedAt  pgtype.Timestamptz `json:"clicked_at"`
+	ShortUrlID  int64              `json:"short_url_id"`
+	ClickedAt   pgtype.Timestamptz `json:"clicked_at"`
+	ClickedAt_2 pgtype.Timestamptz `json:"clicked_at_2"`
 }
 
 type GetClicksByOSRow struct {
@@ -187,7 +202,7 @@ type GetClicksByOSRow struct {
 }
 
 func (q *Queries) GetClicksByOS(ctx context.Context, arg GetClicksByOSParams) ([]GetClicksByOSRow, error) {
-	rows, err := q.db.Query(ctx, getClicksByOS, arg.ShortUrlID, arg.ClickedAt)
+	rows, err := q.db.Query(ctx, getClicksByOS, arg.ShortUrlID, arg.ClickedAt, arg.ClickedAt_2)
 	if err != nil {
 		return nil, err
 	}
@@ -207,17 +222,25 @@ func (q *Queries) GetClicksByOS(ctx context.Context, arg GetClicksByOSParams) ([
 }
 
 const getClicksByShortURLID = `-- name: GetClicksByShortURLID :many
-SELECT id, short_url_id, clicked_at, ip_hash, country, city, region, browser, os, device_type, referrer, referrer_domain, utm_source, utm_medium, utm_campaign, is_unique, is_bot FROM clicks WHERE short_url_id = $1 ORDER BY clicked_at DESC LIMIT $2 OFFSET $3
+SELECT id, short_url_id, clicked_at, ip_hash, country, city, region, browser, os, device_type, referrer, referrer_domain, utm_source, utm_medium, utm_campaign, is_unique, is_bot FROM clicks WHERE short_url_id = $1 AND clicked_at >= $4 AND clicked_at <= $5 ORDER BY clicked_at DESC LIMIT $2 OFFSET $3
 `
 
 type GetClicksByShortURLIDParams struct {
-	ShortUrlID int64 `json:"short_url_id"`
-	Limit      int32 `json:"limit"`
-	Offset     int32 `json:"offset"`
+	ShortUrlID  int64              `json:"short_url_id"`
+	Limit       int32              `json:"limit"`
+	Offset      int32              `json:"offset"`
+	ClickedAt   pgtype.Timestamptz `json:"clicked_at"`
+	ClickedAt_2 pgtype.Timestamptz `json:"clicked_at_2"`
 }
 
 func (q *Queries) GetClicksByShortURLID(ctx context.Context, arg GetClicksByShortURLIDParams) ([]Click, error) {
-	rows, err := q.db.Query(ctx, getClicksByShortURLID, arg.ShortUrlID, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, getClicksByShortURLID,
+		arg.ShortUrlID,
+		arg.Limit,
+		arg.Offset,
+		arg.ClickedAt,
+		arg.ClickedAt_2,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -260,12 +283,13 @@ SELECT
     COUNT(*) FILTER (WHERE is_unique = TRUE) as unique_clicks,
     COUNT(*) FILTER (WHERE is_bot = TRUE) as bot_clicks
 FROM clicks
-WHERE short_url_id = $1 AND clicked_at >= $2
+WHERE short_url_id = $1 AND clicked_at >= $2 AND clicked_at <= $3
 `
 
 type GetClicksSummaryParams struct {
-	ShortUrlID int64              `json:"short_url_id"`
-	ClickedAt  pgtype.Timestamptz `json:"clicked_at"`
+	ShortUrlID  int64              `json:"short_url_id"`
+	ClickedAt   pgtype.Timestamptz `json:"clicked_at"`
+	ClickedAt_2 pgtype.Timestamptz `json:"clicked_at_2"`
 }
 
 type GetClicksSummaryRow struct {
@@ -275,7 +299,7 @@ type GetClicksSummaryRow struct {
 }
 
 func (q *Queries) GetClicksSummary(ctx context.Context, arg GetClicksSummaryParams) (GetClicksSummaryRow, error) {
-	row := q.db.QueryRow(ctx, getClicksSummary, arg.ShortUrlID, arg.ClickedAt)
+	row := q.db.QueryRow(ctx, getClicksSummary, arg.ShortUrlID, arg.ClickedAt, arg.ClickedAt_2)
 	var i GetClicksSummaryRow
 	err := row.Scan(&i.TotalClicks, &i.UniqueClicks, &i.BotClicks)
 	return i, err
@@ -304,12 +328,13 @@ func (q *Queries) GetClicksSummaryAllTime(ctx context.Context, shortUrlID int64)
 }
 
 const getClicksTimeseries = `-- name: GetClicksTimeseries :many
-SELECT DATE_TRUNC('day', clicked_at)::TIMESTAMPTZ as date, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 GROUP BY DATE_TRUNC('day', clicked_at) ORDER BY date
+SELECT DATE_TRUNC('day', clicked_at)::TIMESTAMPTZ as date, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND clicked_at <= $3 GROUP BY DATE_TRUNC('day', clicked_at) ORDER BY date
 `
 
 type GetClicksTimeseriesParams struct {
-	ShortUrlID int64              `json:"short_url_id"`
-	ClickedAt  pgtype.Timestamptz `json:"clicked_at"`
+	ShortUrlID  int64              `json:"short_url_id"`
+	ClickedAt   pgtype.Timestamptz `json:"clicked_at"`
+	ClickedAt_2 pgtype.Timestamptz `json:"clicked_at_2"`
 }
 
 type GetClicksTimeseriesRow struct {
@@ -318,7 +343,7 @@ type GetClicksTimeseriesRow struct {
 }
 
 func (q *Queries) GetClicksTimeseries(ctx context.Context, arg GetClicksTimeseriesParams) ([]GetClicksTimeseriesRow, error) {
-	rows, err := q.db.Query(ctx, getClicksTimeseries, arg.ShortUrlID, arg.ClickedAt)
+	rows, err := q.db.Query(ctx, getClicksTimeseries, arg.ShortUrlID, arg.ClickedAt, arg.ClickedAt_2)
 	if err != nil {
 		return nil, err
 	}
@@ -338,12 +363,13 @@ func (q *Queries) GetClicksTimeseries(ctx context.Context, arg GetClicksTimeseri
 }
 
 const getClicksTimeseriesHourly = `-- name: GetClicksTimeseriesHourly :many
-SELECT DATE_TRUNC('hour', clicked_at)::TIMESTAMPTZ as date, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 GROUP BY DATE_TRUNC('hour', clicked_at) ORDER BY date
+SELECT DATE_TRUNC('hour', clicked_at)::TIMESTAMPTZ as date, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND clicked_at <= $3 GROUP BY DATE_TRUNC('hour', clicked_at) ORDER BY date
 `
 
 type GetClicksTimeseriesHourlyParams struct {
-	ShortUrlID int64              `json:"short_url_id"`
-	ClickedAt  pgtype.Timestamptz `json:"clicked_at"`
+	ShortUrlID  int64              `json:"short_url_id"`
+	ClickedAt   pgtype.Timestamptz `json:"clicked_at"`
+	ClickedAt_2 pgtype.Timestamptz `json:"clicked_at_2"`
 }
 
 type GetClicksTimeseriesHourlyRow struct {
@@ -352,7 +378,7 @@ type GetClicksTimeseriesHourlyRow struct {
 }
 
 func (q *Queries) GetClicksTimeseriesHourly(ctx context.Context, arg GetClicksTimeseriesHourlyParams) ([]GetClicksTimeseriesHourlyRow, error) {
-	rows, err := q.db.Query(ctx, getClicksTimeseriesHourly, arg.ShortUrlID, arg.ClickedAt)
+	rows, err := q.db.Query(ctx, getClicksTimeseriesHourly, arg.ShortUrlID, arg.ClickedAt, arg.ClickedAt_2)
 	if err != nil {
 		return nil, err
 	}
@@ -372,13 +398,14 @@ func (q *Queries) GetClicksTimeseriesHourly(ctx context.Context, arg GetClicksTi
 }
 
 const getTopCampaigns = `-- name: GetTopCampaigns :many
-SELECT utm_campaign, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND utm_campaign IS NOT NULL GROUP BY utm_campaign ORDER BY clicks DESC LIMIT $3
+SELECT utm_campaign, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND clicked_at <= $3 AND utm_campaign IS NOT NULL GROUP BY utm_campaign ORDER BY clicks DESC LIMIT $4
 `
 
 type GetTopCampaignsParams struct {
-	ShortUrlID int64              `json:"short_url_id"`
-	ClickedAt  pgtype.Timestamptz `json:"clicked_at"`
-	Limit      int32              `json:"limit"`
+	ShortUrlID  int64              `json:"short_url_id"`
+	ClickedAt   pgtype.Timestamptz `json:"clicked_at"`
+	ClickedAt_2 pgtype.Timestamptz `json:"clicked_at_2"`
+	Limit       int32              `json:"limit"`
 }
 
 type GetTopCampaignsRow struct {
@@ -387,7 +414,12 @@ type GetTopCampaignsRow struct {
 }
 
 func (q *Queries) GetTopCampaigns(ctx context.Context, arg GetTopCampaignsParams) ([]GetTopCampaignsRow, error) {
-	rows, err := q.db.Query(ctx, getTopCampaigns, arg.ShortUrlID, arg.ClickedAt, arg.Limit)
+	rows, err := q.db.Query(ctx, getTopCampaigns,
+		arg.ShortUrlID,
+		arg.ClickedAt,
+		arg.ClickedAt_2,
+		arg.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -407,13 +439,14 @@ func (q *Queries) GetTopCampaigns(ctx context.Context, arg GetTopCampaignsParams
 }
 
 const getTopReferrers = `-- name: GetTopReferrers :many
-SELECT referrer_domain, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND referrer_domain IS NOT NULL GROUP BY referrer_domain ORDER BY clicks DESC LIMIT $3
+SELECT referrer_domain, COUNT(*) as clicks FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND clicked_at <= $3 AND referrer_domain IS NOT NULL GROUP BY referrer_domain ORDER BY clicks DESC LIMIT $4
 `
 
 type GetTopReferrersParams struct {
-	ShortUrlID int64              `json:"short_url_id"`
-	ClickedAt  pgtype.Timestamptz `json:"clicked_at"`
-	Limit      int32              `json:"limit"`
+	ShortUrlID  int64              `json:"short_url_id"`
+	ClickedAt   pgtype.Timestamptz `json:"clicked_at"`
+	ClickedAt_2 pgtype.Timestamptz `json:"clicked_at_2"`
+	Limit       int32              `json:"limit"`
 }
 
 type GetTopReferrersRow struct {
@@ -422,7 +455,12 @@ type GetTopReferrersRow struct {
 }
 
 func (q *Queries) GetTopReferrers(ctx context.Context, arg GetTopReferrersParams) ([]GetTopReferrersRow, error) {
-	rows, err := q.db.Query(ctx, getTopReferrers, arg.ShortUrlID, arg.ClickedAt, arg.Limit)
+	rows, err := q.db.Query(ctx, getTopReferrers,
+		arg.ShortUrlID,
+		arg.ClickedAt,
+		arg.ClickedAt_2,
+		arg.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}
