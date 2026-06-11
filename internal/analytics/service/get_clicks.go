@@ -4,12 +4,16 @@ import (
 	"context"
 	"time"
 	db "url_shortner_backend/db/output"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type GetClicksInput struct {
 	Code      string
 	OwnerType string
 	OwnerID   string
+	Start     time.Time
+	End       time.Time
 	Limit     int32
 	Offset    int32
 }
@@ -49,9 +53,11 @@ func (s *AnalyticsSvcImp) GetClicks(ctx context.Context, input GetClicksInput) (
 	}
 
 	clicks, err := s.Repo.GetClicksByShortURLID(ctx, db.GetClicksByShortURLIDParams{
-		ShortUrlID: shortURL.ID,
-		Limit:      limit,
-		Offset:     input.Offset,
+		ShortUrlID:  shortURL.ID,
+		Limit:       limit,
+		Offset:      input.Offset,
+		ClickedAt:   pgtype.Timestamptz{Time: getStartTime(input.Start), Valid: true},
+		ClickedAt_2: pgtype.Timestamptz{Time: input.End, Valid: true},
 	})
 	if err != nil {
 		s.Logger.Err(err).Msg("failed to get clicks")

@@ -45,9 +45,10 @@ func (s *AnalyticsSvcImp) GetGeoBreakdown(ctx context.Context, input GetGeoInput
 
 	// Get countries
 	countries, err := s.Repo.GetClicksByCountry(ctx, db.GetClicksByCountryParams{
-		ShortUrlID: shortURL.ID,
-		ClickedAt:  clickedAtParam,
-		Limit:      limit,
+		ShortUrlID:  shortURL.ID,
+		ClickedAt:   clickedAtParam,
+		ClickedAt_2: pgtype.Timestamptz{Time: input.End, Valid: true},
+		Limit:       limit,
 	})
 	if err != nil {
 		s.Logger.Err(err).Msg("failed to get countries")
@@ -62,7 +63,7 @@ func (s *AnalyticsSvcImp) GetGeoBreakdown(ctx context.Context, input GetGeoInput
 	}
 
 	// Get cities
-	cities, err := s.Repo.GetClicksByCity(ctx, db.GetClicksByCityParams{ShortUrlID: shortURL.ID, ClickedAt: clickedAtParam, Limit: limit})
+	cities, err := s.Repo.GetClicksByCity(ctx, db.GetClicksByCityParams{ShortUrlID: shortURL.ID, ClickedAt: clickedAtParam, ClickedAt_2: pgtype.Timestamptz{Time: input.End, Valid: true}, Limit: limit})
 	if err != nil {
 		s.Logger.Err(err).Msg("failed to get cities")
 		return GetGeoOutput{}, ErrAnalyticsFetch

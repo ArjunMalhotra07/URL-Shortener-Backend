@@ -34,6 +34,11 @@ func (h *AnalyticsHandler) GetClicks(c echo.Context) error {
 		}
 	}
 
+	timeRange, errMsg := parseTimeRangeParams(c)
+	if errMsg != "" {
+		return c.JSON(http.StatusBadRequest, ErrorRes{Error: errMsg})
+	}
+
 	ownerType, ownerID, authExpired := getOwnerInfo(c)
 	if authExpired {
 		return c.JSON(http.StatusUnauthorized, ErrorRes{Error: "token expired"})
@@ -45,6 +50,8 @@ func (h *AnalyticsHandler) GetClicks(c echo.Context) error {
 		OwnerID:   ownerID,
 		Limit:     limit,
 		Offset:    offset,
+		Start:     timeRange.Start,
+		End:       timeRange.End,
 	})
 	if err != nil {
 		return handleAnalyticsError(c, err)

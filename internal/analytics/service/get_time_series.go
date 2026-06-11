@@ -40,8 +40,9 @@ func (s *AnalyticsSvcImp) GetTimeseries(ctx context.Context, input GetTimeseries
 
 	if input.Interval == "hour" {
 		rows, err := s.Repo.GetClicksTimeseriesHourly(ctx, db.GetClicksTimeseriesHourlyParams{
-			ShortUrlID: shortURL.ID,
-			ClickedAt:  clickedAtParam,
+			ShortUrlID:  shortURL.ID,
+			ClickedAt:   clickedAtParam,
+			ClickedAt_2: pgtype.Timestamptz{Time: input.End, Valid: true},
 		})
 		if err != nil {
 			s.Logger.Err(err).Msg("failed to get hourly timeseries")
@@ -56,7 +57,7 @@ func (s *AnalyticsSvcImp) GetTimeseries(ctx context.Context, input GetTimeseries
 			})
 		}
 	} else {
-		rows, err := s.Repo.GetClicksTimeseries(ctx, db.GetClicksTimeseriesParams{ShortUrlID: shortURL.ID, ClickedAt: clickedAtParam})
+		rows, err := s.Repo.GetClicksTimeseries(ctx, db.GetClicksTimeseriesParams{ShortUrlID: shortURL.ID, ClickedAt: clickedAtParam, ClickedAt_2: pgtype.Timestamptz{Time: input.End, Valid: true}})
 		if err != nil {
 			s.Logger.Err(err).Msg("failed to get daily timeseries")
 			return GetTimeseriesOutput{}, ErrAnalyticsFetch

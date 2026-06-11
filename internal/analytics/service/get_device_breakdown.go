@@ -44,8 +44,9 @@ func (s *AnalyticsSvcImp) GetDeviceBreakdown(ctx context.Context, input GetDevic
 
 	// Get device types
 	devices, err := s.Repo.GetClicksByDevice(ctx, db.GetClicksByDeviceParams{
-		ShortUrlID: shortURL.ID,
-		ClickedAt:  clickedAtParam,
+		ShortUrlID:  shortURL.ID,
+		ClickedAt:   clickedAtParam,
+		ClickedAt_2: pgtype.Timestamptz{Time: input.End, Valid: true},
 	})
 	if err != nil {
 		s.Logger.Err(err).Msg("failed to get devices")
@@ -64,8 +65,9 @@ func (s *AnalyticsSvcImp) GetDeviceBreakdown(ctx context.Context, input GetDevic
 
 	// Get browsers
 	browsers, err := s.Repo.GetClicksByBrowser(ctx, db.GetClicksByBrowserParams{
-		ShortUrlID: shortURL.ID,
-		ClickedAt:  clickedAtParam,
+		ShortUrlID:  shortURL.ID,
+		ClickedAt:   clickedAtParam,
+		ClickedAt_2: pgtype.Timestamptz{Time: input.End, Valid: true},
 	})
 	if err != nil {
 		s.Logger.Err(err).Msg("failed to get browsers")
@@ -84,8 +86,9 @@ func (s *AnalyticsSvcImp) GetDeviceBreakdown(ctx context.Context, input GetDevic
 
 	// Get OS
 	osData, err := s.Repo.GetClicksByOS(ctx, db.GetClicksByOSParams{
-		ShortUrlID: shortURL.ID,
-		ClickedAt:  clickedAtParam,
+		ShortUrlID:  shortURL.ID,
+		ClickedAt:   clickedAtParam,
+		ClickedAt_2: pgtype.Timestamptz{Time: input.End, Valid: true},
 	})
 	if err != nil {
 		s.Logger.Err(err).Msg("failed to get OS")

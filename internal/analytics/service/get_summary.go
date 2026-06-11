@@ -46,7 +46,7 @@ func (s *AnalyticsSvcImp) GetSummary(ctx context.Context, input GetSummaryInput)
 		}
 		summary = db.GetClicksSummaryRow{TotalClicks: allTimeSummary.TotalClicks, UniqueClicks: allTimeSummary.UniqueClicks, BotClicks: allTimeSummary.BotClicks}
 	} else {
-		summary, err = s.Repo.GetClicksSummary(ctx, db.GetClicksSummaryParams{ShortUrlID: shortURL.ID, ClickedAt: pgtype.Timestamptz{Time: input.Start, Valid: true}})
+		summary, err = s.Repo.GetClicksSummary(ctx, db.GetClicksSummaryParams{ShortUrlID: shortURL.ID, ClickedAt: pgtype.Timestamptz{Time: input.Start, Valid: true}, ClickedAt_2: pgtype.Timestamptz{Time: input.End, Valid: true}})
 		if err != nil {
 			s.Logger.Err(err).Msg("failed to get summary")
 			return GetSummaryOutput{}, ErrAnalyticsFetch
@@ -56,9 +56,10 @@ func (s *AnalyticsSvcImp) GetSummary(ctx context.Context, input GetSummaryInput)
 	// Get top referrers
 	clickedAtParam := pgtype.Timestamptz{Time: getStartTime(input.Start), Valid: true}
 	referrers, err := s.Repo.GetTopReferrers(ctx, db.GetTopReferrersParams{
-		ShortUrlID: shortURL.ID,
-		ClickedAt:  clickedAtParam,
-		Limit:      5,
+		ShortUrlID:  shortURL.ID,
+		ClickedAt:   clickedAtParam,
+		ClickedAt_2: pgtype.Timestamptz{Time: input.End, Valid: true},
+		Limit:       5,
 	})
 	if err != nil {
 		s.Logger.Err(err).Msg("failed to get referrers")

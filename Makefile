@@ -10,3 +10,7 @@ sqlc:
 
 goose_up:
 	@goose -dir db/migrations postgres "$DB_DSN" up
+
+
+totp:
+	@oathtool --totp -b NE67GTLV6C32PAW24YFKX2E5X4KI6WNZ
