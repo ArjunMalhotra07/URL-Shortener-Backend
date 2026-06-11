@@ -22,6 +22,23 @@ func (q *Queries) CountClicksByShortURLID(ctx context.Context, shortUrlID int64)
 	return count, err
 }
 
+const countClicksByShortURLIDRange = `-- name: CountClicksByShortURLIDRange :one
+SELECT COUNT(*) FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND clicked_at <= $3
+`
+
+type CountClicksByShortURLIDRangeParams struct {
+	ShortUrlID  int64              `json:"short_url_id"`
+	ClickedAt   pgtype.Timestamptz `json:"clicked_at"`
+	ClickedAt_2 pgtype.Timestamptz `json:"clicked_at_2"`
+}
+
+func (q *Queries) CountClicksByShortURLIDRange(ctx context.Context, arg CountClicksByShortURLIDRangeParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countClicksByShortURLIDRange, arg.ShortUrlID, arg.ClickedAt, arg.ClickedAt_2)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countUniqueClicksByShortURLID = `-- name: CountUniqueClicksByShortURLID :one
 SELECT COUNT(*) FROM clicks WHERE short_url_id = $1 AND is_unique = TRUE
 `

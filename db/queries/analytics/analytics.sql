@@ -8,6 +8,9 @@ SELECT * FROM clicks WHERE short_url_id = $1 AND clicked_at >= $4 AND clicked_at
 -- name: CountClicksByShortURLID :one
 SELECT COUNT(*) FROM clicks WHERE short_url_id = $1;
 
+-- name: CountClicksByShortURLIDRange :one
+SELECT COUNT(*) FROM clicks WHERE short_url_id = $1 AND clicked_at >= $2 AND clicked_at <= $3;
+
 -- name: CountUniqueClicksByShortURLID :one
 SELECT COUNT(*) FROM clicks WHERE short_url_id = $1 AND is_unique = TRUE;
 
