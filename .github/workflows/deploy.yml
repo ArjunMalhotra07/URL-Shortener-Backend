@@ -9,7 +9,7 @@ on:
         default: 'latest'
 
 env:
-  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/url-shortener-backend
+  IMAGE_NAME: ${{ vars.DOCKERHUB_USERNAME }}/url-shortener-backend
   CONTAINER_NAME: url-shortener-api
 
 jobs:
@@ -18,7 +18,7 @@ jobs:
     environment: prod
     steps:
       - name: Log in to Docker Hub
-        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ vars.DOCKERHUB_USERNAME }} --password-stdin
 
       - name: Tag previous image as backup
         run: |
@@ -47,17 +47,17 @@ jobs:
             -p 8080:8080 \
             -v /home/ubuntu/geoip/GeoLite2-City.mmdb:/app/data/geoip/GeoLite2-City.mmdb:ro \
             -e APP_ENV=prod \
-            -e SERVER_PORT=${{ secrets.SERVER_PORT }} \
+            -e SERVER_PORT=${{ vars.SERVER_PORT }} \
             -e DB_DSN="${{ secrets.DB_DSN }}" \
-            -e DB_MAX_CONNS=${{ secrets.DB_MAX_CONNS }} \
-            -e DB_MAX_CONN_LIFETIME_SECONDS=${{ secrets.DB_MAX_CONN_LIFETIME_SECONDS }} \
-            -e DB_MAX_CONN_IDLE_TIME_SECONDS=${{ secrets.DB_MAX_CONN_IDLE_TIME_SECONDS }} \
+            -e DB_MAX_CONNS=${{ vars.DB_MAX_CONNS }} \
+            -e DB_MAX_CONN_LIFETIME_SECONDS=${{ vars.DB_MAX_CONN_LIFETIME_SECONDS }} \
+            -e DB_MAX_CONN_IDLE_TIME_SECONDS=${{ vars.DB_MAX_CONN_IDLE_TIME_SECONDS }} \
             -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-            -e JWT_ACCESS_TOKEN_EXPIRY_MINS=${{ secrets.JWT_ACCESS_TOKEN_EXPIRY_MINS }} \
-            -e JWT_REFRESH_TOKEN_EXPIRY_DAYS=${{ secrets.JWT_REFRESH_TOKEN_EXPIRY_DAYS }} \
-            -e FRONTEND_URL="${{ secrets.FRONTEND_URL }}" \
-            -e MONTHLY_QUOTA_ANONYMOUS=${{ secrets.MONTHLY_QUOTA_ANONYMOUS }} \
-            -e MONTHLY_QUOTA_USER=${{ secrets.MONTHLY_QUOTA_USER }} \
+            -e JWT_ACCESS_TOKEN_EXPIRY_MINS=${{ vars.JWT_ACCESS_TOKEN_EXPIRY_MINS }} \
+            -e JWT_REFRESH_TOKEN_EXPIRY_DAYS=${{ vars.JWT_REFRESH_TOKEN_EXPIRY_DAYS }} \
+            -e FRONTEND_URL="${{ vars.FRONTEND_URL }}" \
+            -e MONTHLY_QUOTA_ANONYMOUS=${{ vars.MONTHLY_QUOTA_ANONYMOUS }} \
+            -e MONTHLY_QUOTA_USER=${{ vars.MONTHLY_QUOTA_USER }} \
             -e REDIS_ADDR="${{ secrets.REDIS_ADDR }}" \
             -e REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD }}" \
             -e REDIS_DB="${{ secrets.REDIS_DB }}" \
