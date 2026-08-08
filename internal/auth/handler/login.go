@@ -39,6 +39,8 @@ func (h *AuthHandler) Login(c echo.Context) error {
 		switch {
 		case errors.Is(err, service.ErrInvalidCredentials):
 			return c.JSON(http.StatusUnauthorized, ErrorRes{Error: "invalid email or password"})
+		case errors.Is(err, service.ErrUserBlocked):
+			return c.JSON(http.StatusForbidden, ErrorRes{Error: "your account has been suspended"})
 		case errors.Is(err, service.ErrEmailExistsWithGoogle):
 			return c.JSON(http.StatusConflict, ErrorRes{Error: "this email uses Google Sign-In. Please login with Google."})
 		default:

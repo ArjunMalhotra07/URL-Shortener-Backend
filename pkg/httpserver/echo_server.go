@@ -112,6 +112,7 @@ func (s *EchoServer) setupRoutes() {
 	adminProtected.GET("/users", s.svcs.Admin.ListUsers)
 	adminProtected.GET("/users/:id/urls", s.svcs.Admin.GetUserURLs)
 	adminProtected.GET("/stats", s.svcs.Admin.GetStats)
+	adminProtected.POST("/block-user", s.svcs.Admin.BlockUser)
 
 	// Redirect route at root level: example.com/:code (no rate limit for fast redirects)
 	s.e.GET("/:code", s.svcs.ShortURL.GetOriginalURL)

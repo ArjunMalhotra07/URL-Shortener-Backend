@@ -22,6 +22,12 @@ func (s *AuthSvcImp) Login(ctx context.Context, input LoginInput) (AuthOutput, e
 		return AuthOutput{}, ErrInvalidCredentials
 	}
 
+	// Check if user is blocked
+	if user.IsBlocked.Bool {
+		s.Logger.Info().Str("email", email).Msg("login attempt for blocked user")
+		return AuthOutput{}, ErrUserBlocked
+	}
+
 	// Check if user signed up with Google
 	if user.LoginType == 1 {
 		s.Logger.Info().Str("email", email).Msg("password login attempt for google user")

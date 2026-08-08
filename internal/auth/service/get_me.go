@@ -27,6 +27,7 @@ func (s *AuthSvcImp) GetMe(ctx context.Context, userID string) (MeOutput, error)
 		UserID:               uuidToString(user.ID),
 		Email:                user.Email,
 		Tier:                 string(user.Tier),
+		IsBlocked:            user.IsBlocked.Bool,
 		URLsCreatedThisMonth: urlsThisMonth,
 		URLsLimit:            limits.URLsPerMonth,
 	}

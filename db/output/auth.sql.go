@@ -163,7 +163,7 @@ func (q *Queries) GetRefreshToken(ctx context.Context, tokenHash string) (Refres
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, password_hash, login_type, google_id, name, avatar_url, tier, subscription_ends_at, created_at, updated_at
+SELECT id, email, password_hash, login_type, google_id, name, avatar_url, tier, subscription_ends_at, is_blocked, created_at, updated_at
 FROM users
 WHERE email = $1
 `
@@ -178,6 +178,7 @@ type GetUserByEmailRow struct {
 	AvatarUrl          pgtype.Text        `json:"avatar_url"`
 	Tier               SubscriptionTier   `json:"tier"`
 	SubscriptionEndsAt pgtype.Timestamptz `json:"subscription_ends_at"`
+	IsBlocked          pgtype.Bool        `json:"is_blocked"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 }
@@ -195,6 +196,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEm
 		&i.AvatarUrl,
 		&i.Tier,
 		&i.SubscriptionEndsAt,
+		&i.IsBlocked,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -202,7 +204,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEm
 }
 
 const getUserByGoogleID = `-- name: GetUserByGoogleID :one
-SELECT id, email, login_type, google_id, name, avatar_url, tier, subscription_ends_at, created_at, updated_at
+SELECT id, email, login_type, google_id, name, avatar_url, tier, subscription_ends_at, is_blocked, created_at, updated_at
 FROM users
 WHERE google_id = $1
 `
@@ -216,6 +218,7 @@ type GetUserByGoogleIDRow struct {
 	AvatarUrl          pgtype.Text        `json:"avatar_url"`
 	Tier               SubscriptionTier   `json:"tier"`
 	SubscriptionEndsAt pgtype.Timestamptz `json:"subscription_ends_at"`
+	IsBlocked          pgtype.Bool        `json:"is_blocked"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 }
@@ -232,6 +235,7 @@ func (q *Queries) GetUserByGoogleID(ctx context.Context, googleID pgtype.Text) (
 		&i.AvatarUrl,
 		&i.Tier,
 		&i.SubscriptionEndsAt,
+		&i.IsBlocked,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -239,7 +243,7 @@ func (q *Queries) GetUserByGoogleID(ctx context.Context, googleID pgtype.Text) (
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, email, login_type, name, avatar_url, tier, subscription_ends_at, created_at, updated_at
+SELECT id, email, login_type, name, avatar_url, tier, subscription_ends_at, is_blocked, created_at, updated_at
 FROM users
 WHERE id = $1
 `
@@ -252,6 +256,7 @@ type GetUserByIDRow struct {
 	AvatarUrl          pgtype.Text        `json:"avatar_url"`
 	Tier               SubscriptionTier   `json:"tier"`
 	SubscriptionEndsAt pgtype.Timestamptz `json:"subscription_ends_at"`
+	IsBlocked          pgtype.Bool        `json:"is_blocked"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 }
@@ -267,6 +272,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (GetUserByIDR
 		&i.AvatarUrl,
 		&i.Tier,
 		&i.SubscriptionEndsAt,
+		&i.IsBlocked,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

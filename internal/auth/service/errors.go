@@ -12,4 +12,5 @@ var (
 	ErrTokenExpired            = errors.New("token expired")
 	ErrTokenCreation           = errors.New("failed to create token")
 	ErrUserNotFound            = errors.New("user not found")
+	ErrUserBlocked             = errors.New("user is blocked")
 )

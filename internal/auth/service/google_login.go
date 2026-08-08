@@ -15,6 +15,11 @@ func (s *AuthSvcImp) GoogleLogin(ctx context.Context, input GoogleLoginInput) (A
 
 	user, err := s.Repo.GetUserByGoogleID(ctx, pgtype.Text{String: input.GoogleID, Valid: true})
 	if err == nil {
+		// Check if user is blocked
+		if user.IsBlocked.Bool {
+			s.Logger.Info().Str("email", email).Msg("google login attempt for blocked user")
+			return AuthOutput{}, ErrUserBlocked
+		}
 		userID := uuidToString(user.ID)
 		if input.AnonID != "" {
 			s.ShortURLSvc.TransferAnonymousURLsWithQuota(ctx, input.AnonID, userID)

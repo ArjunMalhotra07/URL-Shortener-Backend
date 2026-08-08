@@ -9,17 +9,17 @@ VALUES ($1, '', 1, $2, $3, $4)
 RETURNING id, email, name, avatar_url, tier, created_at;
 
 -- name: GetUserByGoogleID :one
-SELECT id, email, login_type, google_id, name, avatar_url, tier, subscription_ends_at, created_at, updated_at
+SELECT id, email, login_type, google_id, name, avatar_url, tier, subscription_ends_at, is_blocked, created_at, updated_at
 FROM users
 WHERE google_id = $1;
 
 -- name: GetUserByEmail :one
-SELECT id, email, password_hash, login_type, google_id, name, avatar_url, tier, subscription_ends_at, created_at, updated_at
+SELECT id, email, password_hash, login_type, google_id, name, avatar_url, tier, subscription_ends_at, is_blocked, created_at, updated_at
 FROM users
 WHERE email = $1;
 
 -- name: GetUserByID :one
-SELECT id, email, login_type, name, avatar_url, tier, subscription_ends_at, created_at, updated_at
+SELECT id, email, login_type, name, avatar_url, tier, subscription_ends_at, is_blocked, created_at, updated_at
 FROM users
 WHERE id = $1;
 

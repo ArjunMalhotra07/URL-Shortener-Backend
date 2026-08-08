@@ -13,6 +13,8 @@ type AdminRepository interface {
 	CountUserURLs(ctx context.Context, ownerID string) (int64, error)
 	GetPlatformStats(ctx context.Context) (db.AdminGetPlatformStatsRow, error)
 	GetUsersByTier(ctx context.Context) ([]db.AdminGetUsersByTierRow, error)
+	SetUserBlocked(ctx context.Context, params db.AdminSetUserBlockedParams) error
+	IsOwnerBlocked(ctx context.Context, code string) (bool, error)
 }
 
 type AdminRepoImp struct {
@@ -51,4 +53,12 @@ func (r *AdminRepoImp) GetPlatformStats(ctx context.Context) (db.AdminGetPlatfor
 
 func (r *AdminRepoImp) GetUsersByTier(ctx context.Context) ([]db.AdminGetUsersByTierRow, error) {
 	return r.Queries.AdminGetUsersByTier(ctx)
+}
+
+func (r *AdminRepoImp) SetUserBlocked(ctx context.Context, params db.AdminSetUserBlockedParams) error {
+	return r.Queries.AdminSetUserBlocked(ctx, params)
+}
+
+func (r *AdminRepoImp) IsOwnerBlocked(ctx context.Context, code string) (bool, error) {
+	return r.Queries.IsOwnerBlocked(ctx, code)
 }

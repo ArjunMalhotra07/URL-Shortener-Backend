@@ -17,6 +17,14 @@ func (h *ShortURLHandler) GetOriginalURL(c echo.Context) error {
 		return c.Redirect(http.StatusFound, h.FrontendURL+"/error?type=invalid")
 	}
 
+	// Check if the URL's owner is blocked
+	if h.BlockChecker != nil {
+		blocked, _ := h.BlockChecker.IsOwnerBlocked(c.Request().Context(), code)
+		if blocked {
+			return c.Redirect(http.StatusFound, h.FrontendURL+"/error?type=blocked")
+		}
+	}
+
 	output, err := h.Svc.GetLongURL(c.Request().Context(), service.GetLongURLInput{
 		Code: code,
 	})

@@ -13,6 +13,7 @@ type MeRes struct {
 	Name                 string  `json:"name,omitempty"`
 	AvatarURL            string  `json:"avatar_url,omitempty"`
 	Tier                 string  `json:"tier"`
+	IsBlocked            bool    `json:"is_blocked"`
 	SubscriptionEndsAt   *string `json:"subscription_ends_at,omitempty"`
 	URLsCreatedThisMonth int64   `json:"urls_created_this_month"`
 	URLsLimit            int     `json:"urls_limit"`
@@ -36,6 +37,7 @@ func (h *AuthHandler) Me(c echo.Context) error {
 		Name:                 output.Name,
 		AvatarURL:            output.AvatarURL,
 		Tier:                 output.Tier,
+		IsBlocked:            output.IsBlocked,
 		URLsCreatedThisMonth: output.URLsCreatedThisMonth,
 		URLsLimit:            output.URLsLimit,
 	}

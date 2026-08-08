@@ -69,13 +69,14 @@ func GetAppServices(p AppServicesParams) *AppServices {
 	})
 	analyticsHandler := analyticshandler.NewAnalyticsHandler(analyticsSvc)
 
-	// Set analytics service on shortURL handler for click recording
-	shortURLHandler.AnalyticsSvc = analyticsSvc
-
 	// Admin
 	admRepo := adminrepo.NewAdminRepoImp(adminrepo.AdminRepoParams{Queries: p.Queries})
 	admSvc := adminservice.NewAdminSvcImp(admRepo, p.JWT, p.Cfg, p.Logger)
 	admHandler := adminhandler.NewAdminHandler(admSvc)
+
+	// Set analytics service and block checker on shortURL handler
+	shortURLHandler.AnalyticsSvc = analyticsSvc
+	shortURLHandler.BlockChecker = admSvc
 
 	return &AppServices{
 		ShortURL:  *shortURLHandler,
