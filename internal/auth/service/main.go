@@ -32,6 +32,7 @@ type MeOutput struct {
 	Name                 string
 	AvatarURL            string
 	Tier                 string
+	IsBlocked            bool
 	SubscriptionEndsAt   *time.Time
 	URLsCreatedThisMonth int64
 	URLsLimit            int

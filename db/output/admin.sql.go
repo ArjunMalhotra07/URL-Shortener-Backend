@@ -172,6 +172,7 @@ SELECT
     u.name,
     u.tier,
     u.login_type,
+    u.is_blocked,
     u.created_at,
     COUNT(DISTINCT s.id)::bigint AS url_count,
     COUNT(DISTINCT s.id) FILTER (WHERE s.is_deleted = false AND s.is_active = true)::bigint AS active_count,
@@ -201,6 +202,7 @@ type AdminListUsersRow struct {
 	Name          pgtype.Text        `json:"name"`
 	Tier          SubscriptionTier   `json:"tier"`
 	LoginType     int16              `json:"login_type"`
+	IsBlocked     pgtype.Bool        `json:"is_blocked"`
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 	UrlCount      int64              `json:"url_count"`
 	ActiveCount   int64              `json:"active_count"`
@@ -224,6 +226,7 @@ func (q *Queries) AdminListUsers(ctx context.Context, arg AdminListUsersParams) 
 			&i.Name,
 			&i.Tier,
 			&i.LoginType,
+			&i.IsBlocked,
 			&i.CreatedAt,
 			&i.UrlCount,
 			&i.ActiveCount,
@@ -239,4 +242,43 @@ func (q *Queries) AdminListUsers(ctx context.Context, arg AdminListUsersParams) 
 		return nil, err
 	}
 	return items, nil
+}
+
+const adminSetUserBlocked = `-- name: AdminSetUserBlocked :exec
+UPDATE users SET is_blocked = $2 WHERE id = $1
+`
+
+type AdminSetUserBlockedParams struct {
+	ID        pgtype.UUID `json:"id"`
+	IsBlocked pgtype.Bool `json:"is_blocked"`
+}
+
+func (q *Queries) AdminSetUserBlocked(ctx context.Context, arg AdminSetUserBlockedParams) error {
+	_, err := q.db.Exec(ctx, adminSetUserBlocked, arg.ID, arg.IsBlocked)
+	return err
+}
+
+const isOwnerBlocked = `-- name: IsOwnerBlocked :one
+SELECT COALESCE(u.is_blocked, false)::boolean
+FROM short_urls s
+JOIN users u ON u.id::text = s.owner_id
+WHERE s.code = $1 AND s.owner_type = 'user'
+`
+
+func (q *Queries) IsOwnerBlocked(ctx context.Context, code string) (bool, error) {
+	row := q.db.QueryRow(ctx, isOwnerBlocked, code)
+	var column_1 bool
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const isUserBlocked = `-- name: IsUserBlocked :one
+SELECT COALESCE(is_blocked, false)::boolean FROM users WHERE id = $1
+`
+
+func (q *Queries) IsUserBlocked(ctx context.Context, id pgtype.UUID) (bool, error) {
+	row := q.db.QueryRow(ctx, isUserBlocked, id)
+	var column_1 bool
+	err := row.Scan(&column_1)
+	return column_1, err
 }

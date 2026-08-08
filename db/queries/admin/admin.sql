@@ -5,6 +5,7 @@ SELECT
     u.name,
     u.tier,
     u.login_type,
+    u.is_blocked,
     u.created_at,
     COUNT(DISTINCT s.id)::bigint AS url_count,
     COUNT(DISTINCT s.id) FILTER (WHERE s.is_deleted = false AND s.is_active = true)::bigint AS active_count,
@@ -60,3 +61,15 @@ SELECT
 SELECT tier, COUNT(*)::bigint AS count
 FROM users
 GROUP BY tier;
+
+-- name: AdminSetUserBlocked :exec
+UPDATE users SET is_blocked = $2 WHERE id = $1;
+
+-- name: IsUserBlocked :one
+SELECT COALESCE(is_blocked, false)::boolean FROM users WHERE id = $1;
+
+-- name: IsOwnerBlocked :one
+SELECT COALESCE(u.is_blocked, false)::boolean
+FROM short_urls s
+JOIN users u ON u.id::text = s.owner_id
+WHERE s.code = $1 AND s.owner_type = 'user';

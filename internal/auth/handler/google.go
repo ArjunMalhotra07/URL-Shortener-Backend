@@ -58,6 +58,8 @@ func (h *AuthHandler) GoogleLogin(c echo.Context) error {
 		switch {
 		case errors.Is(err, service.ErrEmailExistsWithPassword):
 			return c.JSON(http.StatusConflict, ErrorRes{Error: "Email already registered with password."})
+		case errors.Is(err, service.ErrUserBlocked):
+			return c.JSON(http.StatusForbidden, ErrorRes{Error: "your account has been suspended"})
 		default:
 			return c.JSON(http.StatusInternalServerError, ErrorRes{Error: "google login failed"})
 		}

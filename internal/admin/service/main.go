@@ -3,12 +3,14 @@ package service
 import (
 	"context"
 	"encoding/hex"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/pquerna/otp/totp"
 	"github.com/rs/zerolog"
 
+	db "url_shortner_backend/db/output"
 	"url_shortner_backend/internal/admin/repo"
 	"url_shortner_backend/pkg/config"
 	"url_shortner_backend/pkg/jwt"
@@ -19,6 +21,8 @@ type AdminService interface {
 	ListUsers(ctx context.Context, input ListUsersInput) (ListUsersOutput, error)
 	GetUserURLs(ctx context.Context, input GetUserURLsInput) (GetUserURLsOutput, error)
 	GetPlatformStats(ctx context.Context) (PlatformStatsOutput, error)
+	SetUserBlocked(ctx context.Context, input SetUserBlockedInput) error
+	IsOwnerBlocked(ctx context.Context, code string) (bool, error)
 }
 
 type AdminSvcImp struct {
@@ -87,6 +91,7 @@ type UserRow struct {
 	Name          string `json:"name"`
 	Tier          string `json:"tier"`
 	LoginType     int16  `json:"login_type"`
+	IsBlocked     bool   `json:"is_blocked"`
 	CreatedAt     string `json:"created_at"`
 	UrlCount      int64  `json:"url_count"`
 	ActiveCount   int64  `json:"active_count"`
@@ -131,6 +136,7 @@ func (s *AdminSvcImp) ListUsers(ctx context.Context, input ListUsersInput) (List
 			Name:          textToString(u.Name),
 			Tier:          string(u.Tier),
 			LoginType:     u.LoginType,
+			IsBlocked:     u.IsBlocked.Bool,
 			CreatedAt:     u.CreatedAt.Time.UTC().Format(time.RFC3339),
 			UrlCount:      u.UrlCount,
 			ActiveCount:   u.ActiveCount,
@@ -262,7 +268,52 @@ func (s *AdminSvcImp) GetPlatformStats(ctx context.Context) (PlatformStatsOutput
 	}, nil
 }
 
+// --- Block/Unblock User ---
+
+type SetUserBlockedInput struct {
+	UserID  string
+	Blocked bool
+}
+
+func (s *AdminSvcImp) SetUserBlocked(ctx context.Context, input SetUserBlockedInput) error {
+	err := s.Repo.SetUserBlocked(ctx, db.AdminSetUserBlockedParams{
+		ID:        stringToUUID(input.UserID),
+		IsBlocked: pgtype.Bool{Bool: input.Blocked, Valid: true},
+	})
+	if err != nil {
+		s.Logger.Err(err).Str("user_id", input.UserID).Bool("blocked", input.Blocked).Msg("failed to set user blocked")
+		return err
+	}
+
+	action := "blocked"
+	if !input.Blocked {
+		action = "unblocked"
+	}
+	s.Logger.Info().Str("user_id", input.UserID).Msg("user " + action)
+	return nil
+}
+
+func (s *AdminSvcImp) IsOwnerBlocked(ctx context.Context, code string) (bool, error) {
+	blocked, err := s.Repo.IsOwnerBlocked(ctx, code)
+	if err != nil {
+		// If no rows (anonymous URL or URL not found), not blocked
+		return false, nil
+	}
+	return blocked, nil
+}
+
 // Helpers
+
+func stringToUUID(s string) pgtype.UUID {
+	s = strings.ReplaceAll(s, "-", "")
+	bytes, _ := hex.DecodeString(s)
+	var uuid pgtype.UUID
+	if len(bytes) == 16 {
+		copy(uuid.Bytes[:], bytes)
+		uuid.Valid = true
+	}
+	return uuid
+}
 
 func uuidToString(u pgtype.UUID) string {
 	if !u.Valid {

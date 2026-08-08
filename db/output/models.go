@@ -187,4 +187,5 @@ type User struct {
 	StripeCustomerID   pgtype.Text        `json:"stripe_customer_id"`
 	SubscriptionEndsAt pgtype.Timestamptz `json:"subscription_ends_at"`
 	IsDeleted          pgtype.Bool        `json:"is_deleted"`
+	IsBlocked          pgtype.Bool        `json:"is_blocked"`
 }
