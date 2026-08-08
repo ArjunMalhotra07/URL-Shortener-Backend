@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/caarlos0/env/v11"
@@ -61,6 +60,5 @@ func LoadConfig() (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
-	fmt.Println(cfg)
 	return cfg, nil
 }

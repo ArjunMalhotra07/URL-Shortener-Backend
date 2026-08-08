@@ -91,5 +91,10 @@ func validateURL(raw string) error {
 		}
 	}
 
+	// 4️⃣ Block self-referencing URLs (prevent redirect loops & spam)
+	if host == "tinyclk.com" || host == "www.tinyclk.com" {
+		return errors.New("cannot shorten tinyclk.com URLs")
+	}
+
 	return nil
 }
