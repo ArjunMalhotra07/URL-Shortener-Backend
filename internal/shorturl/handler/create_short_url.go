@@ -92,6 +92,8 @@ func (h *ShortURLHandler) CreateShortURL(c echo.Context) error {
 			return c.JSON(http.StatusBadRequest, ErrorRes{Error: err.Error()})
 		case errors.Is(err, service.ErrMonthlyQuotaExceeded):
 			return c.JSON(http.StatusTooManyRequests, ErrorRes{Error: "Monthly quota exceeded"})
+		case errors.Is(err, service.ErrRateLimitExceeded):
+			return c.JSON(http.StatusTooManyRequests, ErrorRes{Error: "Too many URLs created. Please wait a minute."})
 		case errors.Is(err, service.ErrURLCreation), errors.Is(err, service.ErrURLCodeUpdate):
 			return c.JSON(http.StatusInternalServerError, ErrorRes{Error: "failed to create short url"})
 		default:

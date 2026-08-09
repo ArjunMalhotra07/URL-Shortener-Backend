@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -35,6 +36,16 @@ func (s *ShortURLSvcImp) CreateShortURL(ctx context.Context, input CreateShortUR
 	if err := validateURL(longURL); err != nil {
 		s.Logger.Err(err).Str("url", longURL).Msg("invalid url provided")
 		return CreateShortURLOutput{}, ErrInvalidURL
+	}
+
+	// Check per-minute burst rate limit (10 URLs per minute per user)
+	if s.Redis != nil {
+		key := fmt.Sprintf("rl:shorten:%s", input.OwnerID)
+		allowed, count, _ := s.Redis.CheckRateLimit(ctx, key, 10, 60*time.Second)
+		if !allowed {
+			s.Logger.Warn().Str("owner_id", input.OwnerID).Int64("count", count).Msg("url creation rate limit exceeded")
+			return CreateShortURLOutput{}, ErrRateLimitExceeded
+		}
 	}
 
 	// Check monthly quota
