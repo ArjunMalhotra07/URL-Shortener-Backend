@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"net/url"
 	"strings"
@@ -91,10 +92,30 @@ func validateURL(raw string) error {
 		}
 	}
 
-	// 4️⃣ Block self-referencing URLs (prevent redirect loops & spam)
-	if host == "tinyclk.com" || host == "www.tinyclk.com" {
-		return errors.New("cannot shorten tinyclk.com URLs")
+	// 4️⃣ Block self-referencing & known abuse domains
+	for _, blocked := range blockedDomains {
+		if host == blocked || strings.HasSuffix(host, "."+blocked) {
+			return fmt.Errorf("domain %s is not allowed", blocked)
+		}
 	}
 
 	return nil
+}
+
+// blockedDomains contains self-referencing and known abuse-prone domains.
+// Matches exact domain and all subdomains (e.g., "catbox.moe" blocks "files.catbox.moe").
+var blockedDomains = []string{
+	// Self-referencing
+	"tinyclk.com",
+	// File hosting (commonly used for malware distribution)
+	"catbox.moe",
+	"anonfiles.com",
+	"gofile.io",
+	"pixeldrain.com",
+	"file.io",
+	"transfersh.com",
+	// Known phishing/spam platforms
+	"bit-url.com",
+	"grabify.link",
+	"iplogger.org",
 }
