@@ -79,6 +79,22 @@ func (r *RedisClient) HIncrBy(ctx context.Context, key, field string, incr int64
 	return r.client.HIncrBy(ctx, key, field, incr).Result()
 }
 
+// CheckRateLimit increments a counter for the given key and returns whether the limit is exceeded.
+// Window resets after the TTL expires. Returns (allowed, currentCount, error).
+func (r *RedisClient) CheckRateLimit(ctx context.Context, key string, limit int64, window time.Duration) (bool, int64, error) {
+	count, err := r.client.Incr(ctx, key).Result()
+	if err != nil {
+		return true, 0, err // fail open — don't block on Redis errors
+	}
+
+	// Set TTL only on the first increment (when count == 1)
+	if count == 1 {
+		r.client.Expire(ctx, key, window)
+	}
+
+	return count <= limit, count, nil
+}
+
 func (r *RedisClient) Client() *redis.Client {
 	return r.client
 }

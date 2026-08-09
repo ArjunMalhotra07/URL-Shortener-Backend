@@ -14,6 +14,7 @@ var (
 	ErrURLFetch             = errors.New("failed to fetch urls")
 	ErrURLTransfer          = errors.New("failed to transfer urls")
 	ErrMonthlyQuotaExceeded = errors.New("monthly url creation limit exceeded")
+	ErrRateLimitExceeded    = errors.New("too many URLs created, try again in a minute")
 	ErrURLNotOwned          = errors.New("url not owned by user")
 	ErrURLToggle            = errors.New("failed to toggle url")
 	ErrURLDelete            = errors.New("failed to delete url")
